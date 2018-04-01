@@ -1,0 +1,648 @@
+------------------------------------------------------------------------------------------------------------
+TEST 1A: create array with static memory allocation, add 1000 blocks
+
+-----> Test program with static library:
+Create table:
+real: 0.000016 s
+user: 0.000015 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.005938 s
+user: 0.005938 s
+system: 0.000000 s
+
+Remove number:
+real: 0.000329 s
+user: 0.000329 s
+system: 0.000000 s
+
+-----> Test program with shared library:
+Create table:
+real: 0.000006 s
+user: 0.000006 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.005795 s
+user: 0.005796 s
+system: 0.000000 s
+
+Remove number:
+real: 0.000384 s
+user: 0.000384 s
+system: 0.000000 s
+
+-----> Test program with dynamically loaded library:
+Create table:
+real: 0.000008 s
+user: 0.000007 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.006542 s
+user: 0.006543 s
+system: 0.000000 s
+
+Remove number:
+real: 0.000477 s
+user: 0.000478 s
+system: 0.000000 s
+
+------------------------------------------------------------------------------------------------------------
+TEST 1B: create array with dynamic memory allocation, add 1000 blocks
+
+-----> Test program with static library:
+Create table:
+real: 0.000010 s
+user: 0.000010 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.003780 s
+user: 0.003769 s
+system: 0.000000 s
+
+Remove number:
+real: 0.000362 s
+user: 0.000362 s
+system: 0.000000 s
+
+-----> Test program with shared library:
+Create table:
+real: 0.000013 s
+user: 0.000013 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.003626 s
+user: 0.003626 s
+system: 0.000000 s
+
+Remove number:
+real: 0.000338 s
+user: 0.000338 s
+system: 0.000000 s
+
+-----> Test program with dynamically loaded library:
+Create table:
+real: 0.000013 s
+user: 0.000012 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.003937 s
+user: 0.003938 s
+system: 0.000000 s
+
+Remove number:
+real: 0.000346 s
+user: 0.000346 s
+system: 0.000000 s
+
+------------------------------------------------------------------------------------------------------------
+TEST 2A: create array with static memory allocation, add few blocks and find ID of block for which sum of characters is closest to given value
+
+-----> Test program with static library:
+Create table:
+real: 0.000005 s
+user: 0.000004 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.004333 s
+user: 0.004324 s
+system: 0.000000 s
+
+Search element:
+0
+400
+Index: 400
+real: 0.000520 s
+user: 0.000520 s
+system: 0.000000 s
+
+-----> Test program with shared library:
+Create table:
+real: 0.000005 s
+user: 0.000005 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.004643 s
+user: 0.004645 s
+system: 0.000000 s
+
+Search element:
+0
+400
+Index: 400
+real: 0.000646 s
+user: 0.000646 s
+system: 0.000000 s
+
+-----> Test program with dynamically loaded library:
+Create table:
+real: 0.000006 s
+user: 0.000005 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.003121 s
+user: 0.003121 s
+system: 0.000000 s
+
+Search element:
+0
+400
+Index: 400
+real: 0.000419 s
+user: 0.000420 s
+system: 0.000000 s
+
+------------------------------------------------------------------------------------------------------------
+TEST 2B: create array with dynamic memory allocation, find ID of block for which sum of characters is closest to given value
+
+-----> Test program with static library:
+Create table:
+real: 0.000005 s
+user: 0.000005 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.002017 s
+user: 0.002017 s
+system: 0.000000 s
+
+Search element:
+0
+400
+Index: 400
+real: 0.000333 s
+user: 0.000332 s
+system: 0.000000 s
+
+-----> Test program with shared library:
+Create table:
+real: 0.000006 s
+user: 0.000005 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.001992 s
+user: 0.001992 s
+system: 0.000000 s
+
+Search element:
+0
+400
+Index: 400
+real: 0.000333 s
+user: 0.000333 s
+system: 0.000000 s
+
+-----> Test program with dynamically loaded library:
+Create table:
+real: 0.000006 s
+user: 0.000006 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.002111 s
+user: 0.002112 s
+system: 0.000000 s
+
+Search element:
+0
+400
+Index: 400
+real: 0.000371 s
+user: 0.000372 s
+system: 0.000000 s
+
+------------------------------------------------------------------------------------------------------------
+TEST 3A: create array with static memory allocation, adding and deleting blocks
+
+-----> Test program with static library:
+Create table:
+real: 0.000003 s
+user: 0.000003 s
+system: 0.000000 s
+
+Add {number} of blocks, remove {number} of {block}:
+real: 0.002204 s
+user: 0.002197 s
+system: 0.000000 s
+
+Add block, remove block {number} of times:
+real: 0.001962 s
+user: 0.001962 s
+system: 0.000000 s
+
+-----> Test program with shared library:
+Create table:
+real: 0.000003 s
+user: 0.000003 s
+system: 0.000000 s
+
+Add {number} of blocks, remove {number} of {block}:
+real: 0.002262 s
+user: 0.002263 s
+system: 0.000000 s
+
+Add block, remove block {number} of times:
+real: 0.001917 s
+user: 0.001918 s
+system: 0.000000 s
+
+-----> Test program with dynamically loaded library:
+Create table:
+real: 0.000004 s
+user: 0.000004 s
+system: 0.000000 s
+
+Add {number} of blocks, remove {number} of {block}:
+real: 0.002253 s
+user: 0.002253 s
+system: 0.000000 s
+
+Add block, remove block {number} of times:
+real: 0.001900 s
+user: 0.001900 s
+system: 0.000000 s
+
+------------------------------------------------------------------------------------------------------------
+TEST 3B: create array with dynamic memory allocation, adding and deleting blocks
+
+-----> Test program with static library:
+Create table:
+real: 0.000040 s
+user: 0.000000 s
+system: 0.000040 s
+
+Add {number} of blocks, remove {number} of {block}:
+real: 0.038385 s
+user: 0.034984 s
+system: 0.003383 s
+
+Add block, remove block {number} of times:
+real: 0.013183 s
+user: 0.013061 s
+system: 0.000117 s
+
+-----> Test program with shared library:
+Create table:
+real: 0.000006 s
+user: 0.000006 s
+system: 0.000000 s
+
+Add {number} of blocks, remove {number} of {block}:
+real: 0.001550 s
+user: 0.001550 s
+system: 0.000000 s
+
+Add block, remove block {number} of times:
+real: 0.001261 s
+user: 0.001261 s
+system: 0.000000 s
+
+-----> Test program with dynamically loaded library:
+Create table:
+real: 0.000006 s
+user: 0.000000 s
+system: 0.000006 s
+
+Add {number} of blocks, remove {number} of {block}:
+real: 0.001561 s
+user: 0.000000 s
+system: 0.001561 s
+
+Add block, remove block {number} of times:
+real: 0.001281 s
+user: 0.000000 s
+system: 0.001282 s
+
+------------------------------------------------------------------------------------------------------------
+TEST 1A: create array with static memory allocation, add 1000 blocks
+
+-----> Test program with static library:
+Create table:
+real: 0.000011 s
+user: 0.000010 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.009197 s
+user: 0.009198 s
+system: 0.000000 s
+
+Remove number:
+real: 0.000339 s
+user: 0.000340 s
+system: 0.000000 s
+
+-----> Test program with shared library:
+Create table:
+real: 0.000014 s
+user: 0.000014 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.007592 s
+user: 0.007593 s
+system: 0.000000 s
+
+Remove number:
+real: 0.000643 s
+user: 0.000643 s
+system: 0.000000 s
+
+-----> Test program with dynamically loaded library:
+Create table:
+real: 0.000012 s
+user: 0.000011 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.006559 s
+user: 0.006560 s
+system: 0.000000 s
+
+Remove number:
+real: 0.000343 s
+user: 0.000343 s
+system: 0.000000 s
+
+------------------------------------------------------------------------------------------------------------
+TEST 1B: create array with dynamic memory allocation, add 1000 blocks
+
+-----> Test program with static library:
+Create table:
+real: 0.000013 s
+user: 0.000013 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.003923 s
+user: 0.003923 s
+system: 0.000000 s
+
+Remove number:
+real: 0.000357 s
+user: 0.000357 s
+system: 0.000000 s
+
+-----> Test program with shared library:
+Create table:
+real: 0.000011 s
+user: 0.000010 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.003107 s
+user: 0.003107 s
+system: 0.000000 s
+
+Remove number:
+real: 0.000308 s
+user: 0.000309 s
+system: 0.000000 s
+
+-----> Test program with dynamically loaded library:
+Create table:
+real: 0.000012 s
+user: 0.000012 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.003357 s
+user: 0.003358 s
+system: 0.000000 s
+
+Remove number:
+real: 0.000325 s
+user: 0.000326 s
+system: 0.000000 s
+
+------------------------------------------------------------------------------------------------------------
+TEST 2A: create array with static memory allocation, add few blocks and find ID of block for which sum of characters is closest to given value
+
+-----> Test program with static library:
+Create table:
+real: 0.000005 s
+user: 0.000000 s
+system: 0.000004 s
+
+AddNumber:
+real: 0.004539 s
+user: 0.002657 s
+system: 0.001880 s
+
+Search element:
+0
+400
+Index: 400
+real: 0.000650 s
+user: 0.000325 s
+system: 0.000325 s
+
+-----> Test program with shared library:
+Create table:
+real: 0.000004 s
+user: 0.000004 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.003255 s
+user: 0.003256 s
+system: 0.000000 s
+
+Search element:
+0
+400
+Index: 400
+real: 0.000434 s
+user: 0.000435 s
+system: 0.000000 s
+
+-----> Test program with dynamically loaded library:
+Create table:
+real: 0.000008 s
+user: 0.000007 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.004762 s
+user: 0.004763 s
+system: 0.000000 s
+
+Search element:
+0
+400
+Index: 400
+real: 0.000512 s
+user: 0.000513 s
+system: 0.000000 s
+
+------------------------------------------------------------------------------------------------------------
+TEST 2B: create array with dynamic memory allocation, find ID of block for which sum of characters is closest to given value
+
+-----> Test program with static library:
+Create table:
+real: 0.000008 s
+user: 0.000006 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.002803 s
+user: 0.002803 s
+system: 0.000000 s
+
+Search element:
+0
+400
+Index: 400
+real: 0.000471 s
+user: 0.000471 s
+system: 0.000000 s
+
+-----> Test program with shared library:
+Create table:
+real: 0.000011 s
+user: 0.000011 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.002882 s
+user: 0.002881 s
+system: 0.000000 s
+
+Search element:
+0
+400
+Index: 400
+real: 0.000472 s
+user: 0.000471 s
+system: 0.000000 s
+
+-----> Test program with dynamically loaded library:
+Create table:
+real: 0.000006 s
+user: 0.000005 s
+system: 0.000000 s
+
+AddNumber:
+real: 0.002011 s
+user: 0.002012 s
+system: 0.000000 s
+
+Search element:
+0
+400
+Index: 400
+real: 0.000333 s
+user: 0.000333 s
+system: 0.000000 s
+
+------------------------------------------------------------------------------------------------------------
+TEST 3A: create array with static memory allocation, adding and deleting blocks
+
+-----> Test program with static library:
+Create table:
+real: 0.000003 s
+user: 0.000002 s
+system: 0.000000 s
+
+Add {number} of blocks, remove {number} of {block}:
+real: 0.002213 s
+user: 0.002213 s
+system: 0.000000 s
+
+Add block, remove block {number} of times:
+real: 0.001924 s
+user: 0.001924 s
+system: 0.000000 s
+
+-----> Test program with shared library:
+Create table:
+real: 0.000004 s
+user: 0.000003 s
+system: 0.000000 s
+
+Add {number} of blocks, remove {number} of {block}:
+real: 0.002196 s
+user: 0.002196 s
+system: 0.000000 s
+
+Add block, remove block {number} of times:
+real: 0.001908 s
+user: 0.001908 s
+system: 0.000000 s
+
+-----> Test program with dynamically loaded library:
+Create table:
+real: 0.000004 s
+user: 0.000000 s
+system: 0.000003 s
+
+Add {number} of blocks, remove {number} of {block}:
+real: 0.002208 s
+user: 0.000000 s
+system: 0.002208 s
+
+Add block, remove block {number} of times:
+real: 0.001939 s
+user: 0.001938 s
+system: 0.000000 s
+
+------------------------------------------------------------------------------------------------------------
+TEST 3B: create array with dynamic memory allocation, adding and deleting blocks
+
+-----> Test program with static library:
+Create table:
+real: 0.000040 s
+user: 0.000040 s
+system: 0.000000 s
+
+Add {number} of blocks, remove {number} of {block}:
+real: 0.039150 s
+user: 0.039150 s
+system: 0.000000 s
+
+Add block, remove block {number} of times:
+real: 0.013053 s
+user: 0.013054 s
+system: 0.000000 s
+
+-----> Test program with shared library:
+Create table:
+real: 0.000006 s
+user: 0.000006 s
+system: 0.000000 s
+
+Add {number} of blocks, remove {number} of {block}:
+real: 0.001593 s
+user: 0.001594 s
+system: 0.000000 s
+
+Add block, remove block {number} of times:
+real: 0.001261 s
+user: 0.001261 s
+system: 0.000000 s
+
+-----> Test program with dynamically loaded library:
+Create table:
+real: 0.000006 s
+user: 0.000005 s
+system: 0.000000 s
+
+Add {number} of blocks, remove {number} of {block}:
+real: 0.001728 s
+user: 0.001729 s
+system: 0.000000 s
+
+Add block, remove block {number} of times:
+real: 0.001332 s
+user: 0.001333 s
+system: 0.000000 s
+
