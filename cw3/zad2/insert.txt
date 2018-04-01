@@ -1,2 +1,9 @@
-ls -l
-echo "oka"
+echo ddddd
+
+ps dddd
+echo kasia
+echo sss
+
+
+
+
