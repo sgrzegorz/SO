@@ -1,6 +1,6 @@
 echo ddddd
 
-ps dddd
+ps -a
 echo kasia
 echo sss
 
