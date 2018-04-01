@@ -1,1 +1,4 @@
 ls -l
+echo "oka"
+echo "mewa"
+echo "derzewa"
