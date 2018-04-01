@@ -21,32 +21,54 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    char str[max_length_of_line];
+    char line[max_length_of_line];
+    for(int i=0;i<max_length_of_line;i++){
+        line[i]='x';
+    }
     char *words[max_number_of_words_in_line];
-    while(fgets(str,max_length_of_line,file) != NULL){
+    while(fgets(line,max_length_of_line,file) != NULL){
 
-        if(str[strlen(str)-1] == '\n') str[strlen(str)-1] = '\0';
+        printf("\n\n%s<-------",line);
+
+        if(line[strlen(line)-1] == '\n') line[strlen(line)-1] = '\0';
 
         int number_of_arguments=0;
-        for(char *t = strtok(str," ");t!=NULL;t = strtok(NULL," ")){
+        for(char *t = strtok(line," ");t!=NULL;t = strtok(NULL," ")){
             words[number_of_arguments++] = t;
         }
         words[number_of_arguments] = NULL; //it's needed by execvp, moreover if number_of_arguments == 0,
                                             //execvp(NULL,NULL) is called. Because of that in file empty lines are allowed.
 
+
+
+
         pid_t pid = fork();
         if(pid == 0){
-            execvp(words[0], words);
-            exit(0);
+//            printf("child, %i\n",(int) getppid());
+//            printf("%i\n",number_of_arguments);
+//            printf("%i\n",words[0]);
+            //execvp(words[0], words);
+
+            exit(errno);
+        }
+        int status;
+        if(waitpid(-1,&status,0)==-1){
+            printf("error occured\n");
+            exit(-1);
         }
 
-        if(wait(NULL)==-1){
+        if(WIFSIGNALED(status)){
             printf("You have put incorrect line: \n");
             for(int i=0;i<number_of_arguments;i++){
                 printf("%s ",words[i]);
             }
-            return -1;
+            printf("\n");
+            exit(-1);
 
+        }
+
+        for(int i=0;i<max_length_of_line;i++){
+            line[i]='x';
         }
 
     }
