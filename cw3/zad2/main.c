@@ -36,8 +36,8 @@ int main(int argc, char *argv[])
         for(char *t = strtok(line," ");t!=NULL;t = strtok(NULL," ")){
             words[number_of_arguments++] = t;
         }
-        words[number_of_arguments] = NULL; //it's needed by execvp, moreover if number_of_arguments == 0,
-                                            //execvp(NULL,NULL) is called. Because of that in file empty lines are allowed.
+        words[number_of_arguments] = NULL; //it's needed by execvp
+
 
         pid_t pid = fork();
         if(pid == 0){
