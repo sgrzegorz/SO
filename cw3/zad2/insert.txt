@@ -1,4 +1,5 @@
-ls -l
+
 echo "oka"
-echo "mewa"
-echo "derzewa"
+echo "mewa ddddddddddddddddd" fffff
+pms -ax m
+echo "derzewa

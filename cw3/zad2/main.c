@@ -1,66 +1,57 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define BUFFSIZE 100
-#define MAX_NUM_OF_WORDS_IN_LINE  100
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-
-
-void error(char *s){
-    printf("%s\n",s);
-    perror("Program execution failed.");
-    exit(EXIT_FAILURE);
-}
+#define max_length_of_line 100
+#define max_number_of_words_in_line  100
 
 
 
-
-int main()
+int main(int argc, char *argv[])
 {
+    if(argc!=2){
+        printf("Incorrect number of arguments\n");
+        exit(-1);
+    }
 
+    FILE *file = fopen(argv[1],"r");
+    if(file == NULL){
+        printf("Opening of a file wasn't possible");
+        exit(-1);
+    }
 
-    FILE *file = fopen("../insert.txt","r");
-    if(file == NULL) error("Opening of a file wasn't possible");
+    char str[max_length_of_line];
+    char *words[max_number_of_words_in_line];
+    while(fgets(str,max_length_of_line,file) != NULL){
 
-
-    char str[BUFFSIZE];
-    char *words[MAX_NUM_OF_WORDS_IN_LINE];
-    while(fgets(str,BUFFSIZE,file) != NULL){
-
-        if(str[strlen(str)-1] == '\n') str[strlen(str)-1] = '\0';  //strtok saves \n
+        if(str[strlen(str)-1] == '\n') str[strlen(str)-1] = '\0';
 
         int number_of_arguments=0;
         for(char *t = strtok(str," ");t!=NULL;t = strtok(NULL," ")){
             words[number_of_arguments++] = t;
         }
-        words[number_of_arguments] = NULL;
+        words[number_of_arguments] = NULL; //it's needed by execvp, moreover if number_of_arguments == 0,
+                                            //execvp(NULL,NULL) is called. Because of that in file empty lines are allowed.
 
-        //printf("%s",words[0]);
-
-        char *argv[] = {"ls", "-l", 0};
-        pid_t pid = vfork();
+        pid_t pid = fork();
         if(pid == 0){
             execvp(words[0], words);
             exit(0);
         }
-        int status;
-        waitpid(-1,&status,0);
-        if(status){
-            error("You have put incorrect line");
+
+        if(wait(NULL)==-1){
+            printf("You have put incorrect line: \n");
             for(int i=0;i<number_of_arguments;i++){
                 printf("%s ",words[i]);
             }
+            return -1;
+
         }
 
     }
-    //if(fgets(str,BUFFSIZE,file) == NULL) error("fgets error");
-
-
 
     fclose(file);
-
-
 
     return 0;
 }
