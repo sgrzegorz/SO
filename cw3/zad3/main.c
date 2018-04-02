@@ -27,7 +27,7 @@ void printTimeDifference(struct rusage T2, struct rusage T1,char *words[],int nu
         printf("system: %ld.%06ld s; ", T2.ru_stime.tv_sec - T1.ru_stime.tv_sec-1, 1000000+T2.ru_stime.tv_usec - T1.ru_stime.tv_usec);
     }
 
-    printf("MB: %ld\n",(T2.ru_maxrss ) /1024);
+    //printf("MB: %ld\n",(T2.ru_maxrss ) /1024); this line may show max allocated memory
 }
 
 void setRestrictions(char *time, char *virtual_memory){
