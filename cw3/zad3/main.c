@@ -10,45 +10,39 @@
 #define max_length_of_line 100
 #define max_number_of_words_in_line  100
 
-typedef struct {
-    struct timeval user;
-    struct timeval system;
-} Time;
 
-
-
-Time measureTime(){
-    Time T;
-
-    struct rusage tmp;
-    getrusage(RUSAGE_SELF, &tmp);
-
-    T.user = tmp.ru_utime;
-    T.system = tmp.ru_stime;
-    return T;
-}
-
-void measure
-
-void printTimeDifference(Time T2, Time T1){
-
-    if(T2.user.tv_usec >=T1.user.tv_usec){
-        printf("user: %ld.%06ld s\n", T2.user.tv_sec - T1.user.tv_sec, T2.user.tv_usec - T1.user.tv_usec);
-    }else{
-        printf("user: %ld.%06ld s\n", T2.user.tv_sec - T1.user.tv_sec-1, 1000000+T2.user.tv_usec - T1.user.tv_usec);
+void printTimeDifference(struct rusage T2, struct rusage T1,char *words[],int number_of_arguments){
+    for(int i=0;i<number_of_arguments;i++){
+        printf("%s ",words[i]);
     }
-    if(T2.system.tv_usec >=T1.system.tv_usec){
-        printf("system: %ld.%06ld s\n", T2.system.tv_sec - T1.system.tv_sec, T2.system.tv_usec - T1.system.tv_usec);
+
+    if(T2.ru_utime.tv_usec >=T1.ru_utime.tv_usec){
+        printf(" user: %ld.%06ld s, ", T2.ru_utime.tv_sec - T1.ru_utime.tv_sec, T2.ru_utime.tv_usec - T1.ru_utime.tv_usec);
     }else{
-        printf("system: %ld.%06ld s\n", T2.system.tv_sec - T1.system.tv_sec-1, 1000000+T2.system.tv_usec - T1.system.tv_usec);
+        printf(" user: %ld.%06ld s, ", T2.ru_utime.tv_sec - T1.ru_utime.tv_sec-1, 1000000+T2.ru_utime.tv_usec - T1.ru_utime.tv_usec);
+    }
+    if(T2.ru_stime.tv_usec >=T1.ru_stime.tv_usec){
+        printf("system: %ld.%06ld s\n", T2.ru_stime.tv_sec - T1.ru_stime.tv_sec, T2.ru_stime.tv_usec - T1.ru_stime.tv_usec);
+    }else{
+        printf("system: %ld.%06ld s\n", T2.ru_stime.tv_sec - T1.ru_stime.tv_sec-1, 1000000+T2.ru_stime.tv_usec - T1.ru_stime.tv_usec);
     }
 }
 
+void setRestrictions(char *time, char *virtual_memory){
+    struct rlimit lim;
+    lim.rlim_cur = atol(time);
+    lim.rlim_max =atol(time);
+    setrlimit(RLIMIT_CPU,&lim);
+    lim.rlim_cur = atol(virtual_memory);
+    lim.rlim_max = atol(virtual_memory);
+    setrlimit(RLIMIT_AS,&lim);
 
-int main(int argc, char *argv[])
-{
-    if(argc!=2){
-        printf("Incorrect number of arguments\n");
+}
+
+int main(int argc, char *argv[]){
+
+    if(argc!=4){
+        printf("Correct format: <file.txt> <time> <byte>\n");
         exit(-1);
     }
 
@@ -59,9 +53,12 @@ int main(int argc, char *argv[])
     }
 
     char line[max_length_of_line];
-    for(int i=0;i<max_length_of_line;i++){
-        line[i]='x';
-    }
+//    for(int i=0;i<max_length_of_line;i++){
+//        line[i]='x';
+//    }
+
+    struct rusage T1, T2;
+
     char *words[max_number_of_words_in_line];
     while(fgets(line,max_length_of_line,file) != NULL){
         if(line[0] =='\n') continue;
@@ -74,11 +71,11 @@ int main(int argc, char *argv[])
         }
         words[number_of_arguments] = NULL; //it's needed by execvp
 
-        struct rlimit lim = {1, 1};
-        if (setrlimit(RLIMIT_STACK, &lim) == -1) {
 
-            pid_t pid = fork();
+        getrusage (RUSAGE_CHILDREN, &T1);
+        pid_t pid = fork();
         if(pid == 0){
+            setRestrictions(argv[2],argv[3]);
             if(execvp(words[0], words) == -1){
                 exit(EXIT_FAILURE);
             }
@@ -89,6 +86,7 @@ int main(int argc, char *argv[])
             printf("error occured\n");
             exit(-1);
         }
+
 
         if(WIFEXITED(status) && WEXITSTATUS(status) !=0 ){
             printf("You have put incorrect line: \n");
@@ -101,13 +99,14 @@ int main(int argc, char *argv[])
 
         }
 
-        for(int i=0;i<max_length_of_line;i++){
-            line[i]='x';
-        }
+        getrusage(RUSAGE_CHILDREN,&T2);
+        printTimeDifference(T2,T1,words,number_of_arguments);
+
+//        for(int i=0;i<max_length_of_line;i++){
+//            line[i]='x';
+//        }
 
     }
-
     fclose(file);
-
     return 0;
 }
