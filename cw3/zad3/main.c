@@ -22,27 +22,31 @@ void printTimeDifference(struct rusage T2, struct rusage T1,char *words[],int nu
         printf(" user: %ld.%06ld s, ", T2.ru_utime.tv_sec - T1.ru_utime.tv_sec-1, 1000000+T2.ru_utime.tv_usec - T1.ru_utime.tv_usec);
     }
     if(T2.ru_stime.tv_usec >=T1.ru_stime.tv_usec){
-        printf("system: %ld.%06ld s\n", T2.ru_stime.tv_sec - T1.ru_stime.tv_sec, T2.ru_stime.tv_usec - T1.ru_stime.tv_usec);
+        printf("system: %ld.%06ld s; ", T2.ru_stime.tv_sec - T1.ru_stime.tv_sec, T2.ru_stime.tv_usec - T1.ru_stime.tv_usec);
     }else{
-        printf("system: %ld.%06ld s\n", T2.ru_stime.tv_sec - T1.ru_stime.tv_sec-1, 1000000+T2.ru_stime.tv_usec - T1.ru_stime.tv_usec);
+        printf("system: %ld.%06ld s; ", T2.ru_stime.tv_sec - T1.ru_stime.tv_sec-1, 1000000+T2.ru_stime.tv_usec - T1.ru_stime.tv_usec);
     }
+
+    printf("MB: %ld\n",(T2.ru_maxrss ) /1024);
 }
 
 void setRestrictions(char *time, char *virtual_memory){
     struct rlimit lim;
-    lim.rlim_cur = atol(time)*1024*1024;
-    lim.rlim_max =atol(time)*1024*1024;
+    lim.rlim_cur = (rlim_t) atol(time);
+    lim.rlim_max =  (rlim_t) atol(time);
     setrlimit(RLIMIT_CPU,&lim);
-    lim.rlim_cur = atol(virtual_memory);
-    lim.rlim_max = atol(virtual_memory);
+    lim.rlim_cur = (rlim_t) atol(virtual_memory)*1024*1024;
+    lim.rlim_max = (rlim_t) atol(virtual_memory)*1024*1024; // 1B *1024 *1024 = 1MB
+    printf ("%ld\n",lim.rlim_max);
     setrlimit(RLIMIT_AS,&lim);
+
 
 }
 
 int main(int argc, char *argv[]){
 
     if(argc!=4){
-        printf("Correct format: <file.txt> <time> <byte>\n");
+        printf("Correct format: <file.txt> <time seconds> <gigabyte>\n");
         exit(-1);
     }
 
@@ -75,6 +79,7 @@ int main(int argc, char *argv[]){
         getrusage (RUSAGE_CHILDREN, &T1);
         pid_t pid = fork();
         if(pid == 0){
+
             setRestrictions(argv[2],argv[3]);
             if(execvp(words[0], words) == -1){
                 exit(EXIT_FAILURE);
@@ -100,6 +105,7 @@ int main(int argc, char *argv[]){
         }
 
         getrusage(RUSAGE_CHILDREN,&T2);
+
         printTimeDifference(T2,T1,words,number_of_arguments);
 
 //        for(int i=0;i<max_length_of_line;i++){

@@ -1,10 +1,2 @@
-echo ddddd
 
-ps -a
-echo kasia
-
-
-./test2
-
-echo sss
-
+./test1
