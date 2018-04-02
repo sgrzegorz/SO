@@ -30,8 +30,8 @@ void printTimeDifference(struct rusage T2, struct rusage T1,char *words[],int nu
 
 void setRestrictions(char *time, char *virtual_memory){
     struct rlimit lim;
-    lim.rlim_cur = atol(time);
-    lim.rlim_max =atol(time);
+    lim.rlim_cur = atol(time)*1024*1024;
+    lim.rlim_max =atol(time)*1024*1024;
     setrlimit(RLIMIT_CPU,&lim);
     lim.rlim_cur = atol(virtual_memory);
     lim.rlim_max = atol(virtual_memory);
