@@ -47,6 +47,7 @@ int main(int argc, char *argv[]){
 
     if(argc!=4){
         printf("Correct format: <file.txt> <time seconds> <gigabyte>\n");
+        printf("Example ./zad ../insert.txt 10 25\n");
         exit(-1);
     }
 
