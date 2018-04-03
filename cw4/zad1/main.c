@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <zconf.h>
+#include <unistd.h>
 
 
 
@@ -11,37 +11,45 @@ void error(char *array){
 }
 
 volatile int stopped=0;
+pid_t pid;
 
-void handler(int signum){
+void sigint(int signum){
     printf("Received signal SIGINT\n");
+    if(!stopped) kill(pid,SIGSTOP);
     exit(0);
 
 }
 
-void handler1(int signum){
+void sigtstop(int signum){
 
     if(stopped){
+        if((pid = fork()) == 0){
+            execl("../date.sh","../date.sh",NULL);
+            exit(0);
+        }
         stopped=0;
-        return;
     }else{
         printf("Waiting for CTRL+Z continue or CTRL-C exit\n");
+        kill(pid,SIGSTOP);
         stopped=1;
     }
 }
 
-main() {
+int main() {
     struct sigaction sa;
-    sa.sa_handler = handler;
+    sa.sa_handler = sigint;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     sigaction(SIGINT, &sa,NULL);
 
-    signal(SIGTSTP,&handler1);
+    signal(SIGTSTP,&sigtstop);
+
+    if((pid = fork()) == 0){
+        execl("../date.sh","../date.sh",NULL);
+    }
 
     while(1){
-        printf("In loop\n");
-        sleep(1);
-        if(stopped) pause();
+
     }
 
 }
