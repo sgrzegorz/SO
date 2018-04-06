@@ -22,6 +22,7 @@ volatile int K=2; //
 volatile int n; // number of existing children
 volatile int k; //number of received requests
 volatile int **children;
+volatile int *signal_queue;
 //children[X][0] child pid
 //children[X][1] if request from child was received
 //children[X][2] if permission was sent
@@ -59,6 +60,7 @@ int main() {
     for(int i=0;i<N;i++){
         children[i] = calloc(5,sizeof(int));
     }
+    signal_queue = calloc(N,sizeof(int));
 
 
     for(int i=0;i<N;i++){
@@ -90,7 +92,7 @@ printA();
 void childRequestHandler(int signo, siginfo_t* info, void* context){
     printf("Father received request from child: %d\n",info->si_pid);
     int index = -1;
-    for(int i=0;i<N;i++){
+    for(int i=0;i<n;i++){
         if(children[i][0] == info->si_pid){
             children[i][1] = 1;
             k++;
@@ -102,7 +104,6 @@ void childRequestHandler(int signo, siginfo_t* info, void* context){
 
 
     if( k > K){
-        printf("f1fff");
         printf("walks1\n");
         children[index][2] =1; //permission was sent
         kill(info->si_pid,SIGUSR1);
