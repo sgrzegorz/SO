@@ -30,7 +30,7 @@ volatile int **children;
 
 void childRequestHandler(int signo, siginfo_t* info, void* context);
 void printA();
-void childSentRealTimeSignalHandler(int signo, siginfo_t* info, void* context);
+void realTimeHandler(int signo, siginfo_t* info, void* context);
 void killChildrenHandler(int signo, siginfo_t* info, void* context);
 
 
@@ -49,11 +49,10 @@ int main() {
     act.sa_sigaction = killChildrenHandler;
     sigaction(SIGINT,&act,NULL);
 
-    for(int n=0;n<32;n++){
-        act.sa_sigaction = childSentRealTimeSignalHandler;
-        sigaction(SIGRTMIN+n,&act,NULL);
+    act.sa_sigaction = realTimeHandler;
+    for(int i=SIGRTMIN;i<=SIGRTMAX;i++){
+        sigaction(i,&act,NULL);
     }
-
 
 
     children = calloc(N,sizeof(int*));
@@ -65,7 +64,6 @@ int main() {
     for(int i=0;i<N;i++){
         pid_t pid = fork();
         if(pid == 0){
-            srand(getpid()+time(NULL));
             execl("./child","./child",NULL);
             exit(0);
         }else{
@@ -75,35 +73,21 @@ int main() {
     }
 
 
-    while(wait(NULL)){
-        sleep(1);
+    while (wait(NULL)){
+        printf("i");
     }
+//    while(wait(NULL)){
+//        sleep(1);
+//    }
+
     printf("here comes the rain\n");
 
     return 0;
 }
 
 
-
-void printA(){
-    printf("\n");
-    for(int j=0;j<4;j++){
-        if(j==0)printf("%15s","pid");
-        if(j==1)printf("%15s","request");
-        if(j==2)printf("%15s","sig received");
-        if(j==3)printf("%15s","returned val");
-
-        for(int i=0;i<N;i++){
-            printf("|%8d", children[i][j]);
-        }
-        printf("|\n");
-    }
-    printf("\n");
-}
-
-
 void childRequestHandler(int signo, siginfo_t* info, void* context){
-    printf("Child %d request received:\n",info->si_pid);
+    printf("Child %d request received.\n",info->si_pid);
 
     int index = -1;
     for(int i=0;i<N;i++){
@@ -128,7 +112,7 @@ void childRequestHandler(int signo, siginfo_t* info, void* context){
         }
 
     }else if(k == K){
-        printf("walks\n");
+
         for(int i=0;i<N;i++){
             //permission was sent
             if(children[i][1] == 1){
@@ -138,19 +122,19 @@ void childRequestHandler(int signo, siginfo_t* info, void* context){
                 int status;
                 waitpid(info->si_pid,&status,0);
 
-                if(WIFEXITED(status)) children[i][4] = WEXITSTATUS(status); //returned value
-                printf("Ojej%d\n",WEXITSTATUS(status));
+                if(WIFEXITED(status)) children[i][4] = WEXITSTATUS(status);
             }
         }
-    printA();
     }
 
 }
 
-void childSentRealTimeSignalHandler(int signo, siginfo_t* info, void* context){
+void realTimeHandler(int signo, siginfo_t* info, void* context){
     for(int i=0;i<N;i++){
         if(children[i][0] == info->si_pid){
-            children[i][3] = signo;
+            children[i][3] = signo -SIGRTMIN;
+            printf("RTsignal received %d\n",children[i][3]);
+            printA();
             break;
         }
     }
@@ -162,3 +146,20 @@ void killChildrenHandler(int signo, siginfo_t* info, void* context){
     }
 }
 
+
+void printA(){
+    printf("\n");
+    for(int j=0;j<5;j++){
+        if(j==0)printf("%20s","pid");
+        if(j==1)printf("%20s","request");
+        if(j==2)printf("%20s","permission was send?");
+        if(j==3)printf("%20s","real time signal");
+        if(j==4)printf("%20s","returned val");
+
+        for(int i=0;i<N;i++){
+            printf("|%8d", children[i][j]);
+        }
+        printf("|\n");
+    }
+    printf("\n");
+}

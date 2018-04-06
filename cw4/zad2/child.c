@@ -15,7 +15,7 @@ void parentAsksChildToDieHandler(int signo){
 }
 
 void parentAcceptedRequestHandler(int signo){
-    printf("My parent noticed me: %d \n",getppid());
+    printf("My parent noticed me: %d \n",getpid());
     kill(getppid(), SIGRTMIN + (rand() % (SIGRTMAX - SIGRTMIN)));
     live = 0;
 }
@@ -23,7 +23,6 @@ void parentAcceptedRequestHandler(int signo){
 int main() {
     time_t t;
     srand((unsigned int) getpid()+ time(NULL));
-
 
     struct sigaction act;
     sigemptyset(&act.sa_mask);
@@ -33,7 +32,7 @@ int main() {
     act.sa_handler = parentAsksChildToDieHandler;
     sigaction(SIGINT,&act,NULL);
 
-    int length_of_sleeping = rand() % 10;
+    int length_of_sleeping = rand() % 3;
     printf("I live: %d, sleeps %ds \n",getpid(),length_of_sleeping);
     sleep(length_of_sleeping);
     kill(getppid(),SIGUSR1);
@@ -41,6 +40,7 @@ int main() {
     while(live){
 
     }
-    printf("\nwhat");
+    printf("COS%d\n",length_of_sleeping);
+
     return length_of_sleeping;
 }
