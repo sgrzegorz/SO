@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <time.h>
+
 #define maximum_number_of_children 1000
 
 void error(char *s){
@@ -15,7 +17,7 @@ void error(char *s){
 
 
 
-volatile int N=5; //final number of children
+volatile int N=3; //final number of children
 volatile int K=3; //
 volatile int n; // number of existing children
 volatile int k; //number of received requests
@@ -26,75 +28,11 @@ volatile int **children;
 //children[X][3] number of received real-time signal
 //children[X][4] value returned by child
 
-void printA(){
-    printf("\n");
-    for(int j=0;j<4;j++){
-        if(j==0)printf("%15s","pid");
-        if(j==1)printf("%15s","request");
-        if(j==2)printf("%15s","sig received");
-        if(j==3)printf("%15s","returned val");
+void childRequestHandler(int signo, siginfo_t* info, void* context);
+void printA();
+void childSentRealTimeSignalHandler(int signo, siginfo_t* info, void* context);
+void killChildrenHandler(int signo, siginfo_t* info, void* context);
 
-        for(int i=0;i<N;i++){
-            printf("|%8d", children[i][j]);
-        } 
-        printf("|\n");
-    }
-    printf("\n");
-}
-
-
-void childRequestHandler(int signo, siginfo_t* info, void* context){
-
-    int isMyChild=0;
-    int index;
-    for(int i=0;i<N;i++){
-        if(children[i][0] == info->si_pid){
-            children[i][1] = 1;
-            isMyChild =1;
-            index=i;
-            k++;
-            break;
-        }
-    }
-    if(!isMyChild) return;
-    if( k > K){
-        children[index][2] =1; //permission was sent
-        kill(info->si_pid,SIGUSR1);
-        int status;
-        waitpid(info->si_pid,&status,0);
-        if(WIFEXITED(status)){
-            children[index][4] = WEXITSTATUS(status); //returned value
-        }
-
-
-    }else if(k == K ){
-        for(int i=0;i<N;i++){
-            kill(children[i][0],SIGUSR1);
-            children[i][2] = 1; //permission was sent
-            int status;
-            waitpid(info->si_pid,&status,0);
-            if(WIFEXITED(status)){
-                children[index][4] = WEXITSTATUS(status); //returned value
-            }
-
-        }
-    }
-}
-
-void childSentRealTimeSignalHandler(int signo, siginfo_t* info, void* context){
-    for(int i=0;i<N;i++){
-        if(children[i][0] == info->si_pid){
-            children[i][3] = signo;
-            break;
-        }
-    }
-}
-
-void killChildrenHandler(int signo, siginfo_t* info, void* context){
-    for(int i=0;i<N;i++){
-        kill(children[i][0],SIGINT);
-    }
-}
 
 // N-number of children, K-when process will get K requests it'll send singnal to children
 int main() {
@@ -122,11 +60,12 @@ int main() {
     for(int i=0;i<N;i++){
         children[i] = calloc(5,sizeof(int));
     }
-    printA();
+
 
     for(int i=0;i<N;i++){
         pid_t pid = fork();
         if(pid == 0){
+            srand(getpid()+time(NULL));
             execl("./child","./child",NULL);
             exit(0);
         }else{
@@ -138,7 +77,6 @@ int main() {
 
 
     while(wait(NULL)){
-        printA();
         sleep(1);
     }
     printf("here comes the rain\n");
@@ -147,4 +85,81 @@ int main() {
 }
 
 
+
+void printA(){
+    printf("\n");
+    for(int j=0;j<4;j++){
+        if(j==0)printf("%15s","pid");
+        if(j==1)printf("%15s","request");
+        if(j==2)printf("%15s","sig received");
+        if(j==3)printf("%15s","returned val");
+
+        for(int i=0;i<N;i++){
+            printf("|%8d", children[i][j]);
+        }
+        printf("|\n");
+    }
+    printf("\n");
+}
+
+
+void childRequestHandler(int signo, siginfo_t* info, void* context){
+    printf("Child %d request received:\n",info->si_pid);
+
+    int index = -1;
+    for(int i=0;i<N;i++){
+        if(children[i][0] == info->si_pid){
+            children[i][1] = 1;
+            k++;
+            index=i;
+            break;
+        }
+    }
+    if(index == -1) return;
+
+
+    if( k > K){
+        printf("walks1\n");
+        children[index][2] =1; //permission was sent
+        kill(info->si_pid,SIGUSR1);
+        int status;
+        waitpid(info->si_pid,&status,0);
+        if(WIFEXITED(status)){
+            children[index][4] = WEXITSTATUS(status); //returned value
+        }
+
+    }else if(k == K){
+        printf("walks\n");
+        for(int i=0;i<N;i++){
+            //permission was sent
+            if(children[i][1] == 1){
+
+                kill(children[i][0],SIGUSR1);
+                children[i][2] = 1;
+                int status;
+                waitpid(info->si_pid,&status,0);
+
+                if(WIFEXITED(status)) children[i][4] = WEXITSTATUS(status); //returned value
+                printf("Ojej%d\n",WEXITSTATUS(status));
+            }
+        }
+    printA();
+    }
+
+}
+
+void childSentRealTimeSignalHandler(int signo, siginfo_t* info, void* context){
+    for(int i=0;i<N;i++){
+        if(children[i][0] == info->si_pid){
+            children[i][3] = signo;
+            break;
+        }
+    }
+}
+
+void killChildrenHandler(int signo, siginfo_t* info, void* context){
+    for(int i=0;i<N;i++){
+        kill(children[i][0],SIGINT);
+    }
+}
 
