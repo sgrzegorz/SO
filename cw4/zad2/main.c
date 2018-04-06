@@ -17,8 +17,8 @@ void error(char *s){
 
 
 
-volatile int N=3; //final number of children
-volatile int K=3; //
+volatile int N=2; //final number of children
+volatile int K=2; //
 volatile int n; // number of existing children
 volatile int k; //number of received requests
 volatile int **children;
@@ -44,14 +44,14 @@ int main() {
     act.sa_flags = SA_SIGINFO;
 
     act.sa_sigaction = childRequestHandler;
-    sigaction(SIGUSR1,&act,NULL);
+    if(sigaction(SIGUSR1,&act,NULL) == -1) printf("Cannot catch requestHandler");
 
     act.sa_sigaction = killChildrenHandler;
-    sigaction(SIGINT,&act,NULL);
+    if(sigaction(SIGINT,&act,NULL) == -1)  printf("Cannot catch SIGINT");
 
     act.sa_sigaction = realTimeHandler;
     for(int i=SIGRTMIN;i<=SIGRTMAX;i++){
-        sigaction(i,&act,NULL);
+        if(sigaction(i,&act,NULL) == -1) printf("Ehh");
     }
 
 
@@ -64,6 +64,7 @@ int main() {
     for(int i=0;i<N;i++){
         pid_t pid = fork();
         if(pid == 0){
+            sleep(1);
             execl("./child","./child",NULL);
             exit(0);
         }else{
@@ -72,9 +73,9 @@ int main() {
         }
     }
 
+printA();
+    while (wait(NULL)>0){
 
-    while (wait(NULL)){
-        printf("i");
     }
 //    while(wait(NULL)){
 //        sleep(1);
@@ -87,8 +88,7 @@ int main() {
 
 
 void childRequestHandler(int signo, siginfo_t* info, void* context){
-    printf("Child %d request received.\n",info->si_pid);
-
+    printf("Father received request from child: %d\n",info->si_pid);
     int index = -1;
     for(int i=0;i<N;i++){
         if(children[i][0] == info->si_pid){
@@ -102,6 +102,7 @@ void childRequestHandler(int signo, siginfo_t* info, void* context){
 
 
     if( k > K){
+        printf("f1fff");
         printf("walks1\n");
         children[index][2] =1; //permission was sent
         kill(info->si_pid,SIGUSR1);
@@ -114,6 +115,7 @@ void childRequestHandler(int signo, siginfo_t* info, void* context){
     }else if(k == K){
 
         for(int i=0;i<N;i++){
+            printf("ffff");
             //permission was sent
             if(children[i][1] == 1){
 
@@ -126,12 +128,13 @@ void childRequestHandler(int signo, siginfo_t* info, void* context){
             }
         }
     }
-
+    printf("3");
 }
 
 void realTimeHandler(int signo, siginfo_t* info, void* context){
     for(int i=0;i<N;i++){
         if(children[i][0] == info->si_pid){
+            printf("--->%d",signo);
             children[i][3] = signo -SIGRTMIN;
             printf("RTsignal received %d\n",children[i][3]);
             printA();
