@@ -75,7 +75,6 @@ int main() {
     }
 
 
-
     while(wait(NULL)){
         sleep(1);
     }
