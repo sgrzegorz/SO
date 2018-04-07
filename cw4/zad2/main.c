@@ -38,7 +38,7 @@ void killChildrenHandler(int signo, siginfo_t* info, void* context);
 // N-number of children, K-when process will get K requests it'll send singnal to children
 int main() {
     if(K > N) error("K should be smaller than N");
-
+    int n = k =0;
 
     struct sigaction act;
     sigemptyset(&act.sa_mask);
@@ -65,19 +65,18 @@ int main() {
 
     for(int i=0;i<N;i++){
         pid_t pid = fork();
-        if(pid == 0){
-            sleep(1);
-            execl("./child","./child",NULL);
+
+        if(pid == 0) {
+            execl("./child", "./child", NULL);
             exit(0);
-        }else{
-            children[i][0]=(int) pid;
-            n++;
         }
     }
+printf("%d",n);
 
-printA();
-    while (wait(NULL)>0){
 
+    while (1){
+        printf("In loop ");
+        sleep(1);
     }
 //    while(wait(NULL)){
 //        sleep(1);
@@ -90,17 +89,20 @@ printA();
 
 
 void childRequestHandler(int signo, siginfo_t* info, void* context){
+
     printf("Father received request from child: %d\n",info->si_pid);
     int index = -1;
-    for(int i=0;i<n;i++){
-        if(children[i][0] == info->si_pid){
+    for(int i=0;i<N;i++){
+
+        if(children[i][0] == 0){
+            children[i][0] = info->si_pid;
             children[i][1] = 1;
             k++;
-            index=i;
             break;
         }
     }
-    if(index == -1) return;
+
+
 
 
     if( k > K){

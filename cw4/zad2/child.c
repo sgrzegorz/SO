@@ -32,7 +32,7 @@ int main() {
     act.sa_handler = parentAsksChildToDieHandler;
     sigaction(SIGINT,&act,NULL);
 
-    int length_of_sleeping = rand() % 3;
+    int length_of_sleeping = rand() % 4;
     printf("I live: %d, sleeps %ds \n",getpid(),length_of_sleeping);
     sleep(length_of_sleeping);
     kill(getppid(),SIGUSR1);
