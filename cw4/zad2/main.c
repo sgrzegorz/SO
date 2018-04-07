@@ -17,8 +17,8 @@ void error(char *s){
 
 
 
-volatile int N=2; //final number of children
-volatile int K=2; //
+volatile int N=8; //final number of children
+volatile int K=8; //
 volatile int n; // number of existing children
 volatile int k; //number of received requests
 volatile int **children;
@@ -68,14 +68,14 @@ int main() {
 
         if(pid == 0) {
             execl("./child", "./child", NULL);
-            exit(0);
+            error("Fork error happened\n");
         }
     }
 printf("%d",n);
 
 
     while (1){
-        printf("In loop ");
+        printf("In loop.\n");
         sleep(1);
     }
 //    while(wait(NULL)){
@@ -89,7 +89,6 @@ printf("%d",n);
 
 
 void childRequestHandler(int signo, siginfo_t* info, void* context){
-
     printf("Father received request from child: %d\n",info->si_pid);
     int index = -1;
     for(int i=0;i<N;i++){
@@ -112,6 +111,7 @@ void childRequestHandler(int signo, siginfo_t* info, void* context){
         int status;
         waitpid(info->si_pid,&status,0);
         if(WIFEXITED(status)){
+            printf("whatinit\n");
             children[index][4] = WEXITSTATUS(status); //returned value
         }
 
