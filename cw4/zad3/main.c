@@ -19,7 +19,8 @@ void error(char *s){
 
 volatile int L=2;
 int type=1;
-
+int RTsignal1;
+int RTsignal2;
 
 
 
@@ -33,7 +34,7 @@ void parentCountingHandler(int signo, siginfo_t* info, void* context) {
     p_received ++;
 
     char buff[200];
-    sprintf(buff,"Parent received signal number %d.\n",p_received);
+    sprintf(buff,"Parent received %d signals...\n",p_received);
     write(1, buff, strlen(buff));
     if(p_received == L) kill(getpid(),SIGINT);
 }
@@ -74,10 +75,9 @@ void childSIGUSR1Handler(int signo, siginfo_t* info, void* context){
 
 void childRTHandler(int signo, siginfo_t* info, void* context){
     ch_received++;
-    if(ch_received == 3) error("To many real time signals received");
 
     char buff[200];
-    sprintf(buff,"Child received real time signal.\n");
+    sprintf(buff,"Child received real time signal: %d\n",signo - SIGRTMIN);
     write(1, buff, strlen(buff));
     kill(getppid(),signo);
 }
@@ -95,18 +95,33 @@ void parseCommandLineArguments(int argc, char *argv[]){
     void printInfo(){
         printf("Please use correct format of arguments: ");
         printf("./zad <type> <L> \n");
-        printf("<type> is: 1 or 2 or 3 \n");
+        printf("<type> is: 1 or 2 \n");
         printf("L is number of signals to send. L >= 2\n");
         printf("./zad 1 10\n");
+        printf("./zad 3 <RT signal> <RT signal>\n");
+        printf("<RT signal> should be value from {0,1,...,31}");
         exit(-1);
     }
 
-    if(argc != 3) printInfo();
-    if(!(strcmp(argv[1],"1") == 0 || strcmp(argv[1],"2") == 0 || strcmp(argv[1],"3") == 0)) printInfo();
-    type = atoi(argv[1]);
-    L = atoi(argv[2]);
+    if(argc == 3){
+        if(!(strcmp(argv[1],"1") == 0 || strcmp(argv[1],"2") == 0)) printInfo();
+        type = atoi(argv[1]);
+        L = atoi(argv[2]);
+        if(L < 0) printInfo();
+    }else if(argc == 4){
+        if(strcmp(argv[1],"3")!=0) printInfo();
+        type = atoi(argv[1]);
+        RTsignal1 = atoi(argv[2]);
+        RTsignal2 = atoi(argv[3]);
+        if(RTsignal1 < 0 || RTsignal1 >31 || RTsignal2 <0 || RTsignal2 > 31) printInfo();
 
-    if(L < 0) printInfo();
+    }else{
+        printInfo();
+    }
+
+
+
+
 }
 
 void ps(char *s){
@@ -140,13 +155,13 @@ int main(int argc, char *argv[]) {
 
         }else if(type ==3) {
 
-            sigdelset(&blocked, SIGRTMIN);
-            sigdelset(&blocked, SIGRTMIN + 1);
+            sigdelset(&blocked, SIGRTMIN + RTsignal1);
+            sigdelset(&blocked, SIGRTMIN + RTsignal2);
             sigprocmask(SIG_BLOCK, &blocked, NULL);
 
             act.sa_sigaction = childRTHandler;
-            if (sigaction(SIGRTMIN, &act, NULL) == -1) error("childRTHandler failed.");
-            if (sigaction(SIGRTMIN + 1, &act, NULL) == -1) error("childRTHandler failed.");
+            if (sigaction(SIGRTMIN + RTsignal1, &act, NULL) == -1) error("childRTHandler failed.");
+            if (sigaction(SIGRTMIN + RTsignal2, &act, NULL) == -1) error("childRTHandler failed.");
         }
 
         while(1){
@@ -155,7 +170,7 @@ int main(int argc, char *argv[]) {
 
         exit(0);
     }else{
-            sleep(3);
+            sleep(1);
             act.sa_sigaction = parentExitHandler;
             if(sigaction(SIGINT,&act,NULL) == -1) error("parentExitHandler failed");
 
@@ -185,11 +200,11 @@ int main(int argc, char *argv[]) {
         }else if(type ==3) {
 
             act.sa_sigaction = parentCountingHandler;
-            if(sigaction(SIGRTMIN,&act,NULL) == -1) error("parentCountingHandler failed");
-            if(sigaction(SIGRTMIN+1,&act,NULL) == -1) error("parentCountingHandler failed");
-            kill(pid, SIGRTMIN);
+            if(sigaction(SIGRTMIN + RTsignal1,&act,NULL) == -1) error("parentCountingHandler failed");
+            if(sigaction(SIGRTMIN + RTsignal2,&act,NULL) == -1) error("parentCountingHandler failed");
+            kill(pid, SIGRTMIN + RTsignal1);
             usleep(3000);
-            kill(pid, SIGRTMIN + 1);
+            kill(pid, SIGRTMIN + RTsignal2);
             usleep(3000);
 
         }
