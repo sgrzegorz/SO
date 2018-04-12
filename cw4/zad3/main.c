@@ -50,6 +50,23 @@ void parentSIGUSR1Handler(int signo, siginfo_t* info, void* context){
     p_sent++;
 }
 
+void parentRTHandler(int signo, siginfo_t* info, void* context){
+    p_received ++;
+    char buff[200];
+    sprintf(buff,"Parent received total %d RT signals \n",p_received);
+    write(1, buff, strlen(buff));
+    if(p_received == L){
+        kill((pid_t) pid,SIGRTMIN+RTsignal2);
+        sprintf(buff,"Parent dies from RT signal \n",p_received);
+        write(1, buff, strlen(buff));
+        exit(0);
+    }
+
+    kill(pid,SIGRTMIN+RTsignal1);
+    p_sent++;
+}
+
+
 void parentExitHandler(int signo, siginfo_t* info, void* context){
     kill(pid,SIGUSR2);
     usleep(10000);
@@ -99,7 +116,8 @@ void parseCommandLineArguments(int argc, char *argv[]){
         printf("L is number of signals to send. L >= 2\n");
         printf("./zad 1 10\n");
         printf("./zad 3 <RT signal> <RT signal>\n");
-        printf("<RT signal> should be value from {0,1,...,31}");
+        printf("<RT signal> should be value from {0,1,...,31}\n");
+        printf("./zad 3 2400 1 2\n");
         exit(-1);
     }
 
@@ -108,11 +126,12 @@ void parseCommandLineArguments(int argc, char *argv[]){
         type = atoi(argv[1]);
         L = atoi(argv[2]);
         if(L < 0) printInfo();
-    }else if(argc == 4){
+    }else if(argc == 5){
         if(strcmp(argv[1],"3")!=0) printInfo();
         type = atoi(argv[1]);
-        RTsignal1 = atoi(argv[2]);
-        RTsignal2 = atoi(argv[3]);
+        L = atoi(argv[2]);
+        RTsignal1 = atoi(argv[3]);
+        RTsignal2 = atoi(argv[4]);
         if(RTsignal1 < 0 || RTsignal1 >31 || RTsignal2 <0 || RTsignal2 > 31) printInfo();
 
     }else{
@@ -161,6 +180,7 @@ int main(int argc, char *argv[]) {
 
             act.sa_sigaction = childRTHandler;
             if (sigaction(SIGRTMIN + RTsignal1, &act, NULL) == -1) error("childRTHandler failed.");
+            act.sa_sigaction = childExitHandler;
             if (sigaction(SIGRTMIN + RTsignal2, &act, NULL) == -1) error("childRTHandler failed.");
         }
 
@@ -199,13 +219,12 @@ int main(int argc, char *argv[]) {
 
         }else if(type ==3) {
 
-            act.sa_sigaction = parentCountingHandler;
-            if(sigaction(SIGRTMIN + RTsignal1,&act,NULL) == -1) error("parentCountingHandler failed");
-            if(sigaction(SIGRTMIN + RTsignal2,&act,NULL) == -1) error("parentCountingHandler failed");
+            act.sa_sigaction = parentRTHandler;
+            if(sigaction(SIGRTMIN + RTsignal1,&act,NULL) == -1) error("parentRTHandler failed");
+            if(sigaction(SIGRTMIN + RTsignal2,&act,NULL) == -1) error("parentRTHandler failed");
             kill(pid, SIGRTMIN + RTsignal1);
             usleep(3000);
-            kill(pid, SIGRTMIN + RTsignal2);
-            usleep(3000);
+
 
         }
 
