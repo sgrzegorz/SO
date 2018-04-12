@@ -57,7 +57,7 @@ void parentRTHandler(int signo, siginfo_t* info, void* context){
     write(1, buff, strlen(buff));
     if(p_received == L){
         kill((pid_t) pid,SIGRTMIN+RTsignal2);
-        sprintf(buff,"Parent dies from RT signal \n",p_received);
+        sprintf(buff,"Parent dies from RT signal \n");
         write(1, buff, strlen(buff));
         exit(0);
     }
@@ -142,13 +142,13 @@ void parseCommandLineArguments(int argc, char *argv[]){
 
 
 }
-
+/*
 void ps(char *s){
     char buff1[40];
     sprintf(buff1,s);
     write(1,buff1,strlen(buff1));
 }
-
+*/
 int main(int argc, char *argv[]) {
     parseCommandLineArguments(argc,argv);
     struct sigaction act;
