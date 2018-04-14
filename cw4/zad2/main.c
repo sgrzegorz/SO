@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <time.h>
 #include <string.h>
-
+#define WRITE_MSG(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 #define maximum_number_of_children 1000
 
 void error(char *s){
@@ -72,13 +72,6 @@ int main(int argc,char *argv[]) {
     }
     signal_queue = calloc(N,sizeof(int));
 
-    for(int j=0;j<5;j++){
-        for(int i=0;i<N;i++){
-
-            printf("%i",children[i][j]);
-        }
-        printf("\n");
-    }
 
 
     for(int i=0;i<N;i++){
@@ -87,6 +80,8 @@ int main(int argc,char *argv[]) {
         if(pid == 0) {
             execl("./child", "./child", NULL);
             error("Fork error happened\n");
+        }else{
+            children[n++][0] = pid;
         }
     }
 
@@ -96,7 +91,8 @@ int main(int argc,char *argv[]) {
         //char buffer[30];
         //sprintf(buffer,"In loop, N:%d K:%d n: %d, k: %d\n",N,K,n,k);
         //write(1, buffer, strlen(buffer));
-        printA();
+        WRITE_MSG("In loop, N:%d K:%d n: %d, k: %d\n",N,K,n,k);
+      //  printA();
         sleep(1);
     }
 //    while(wait(NULL)){
@@ -161,9 +157,7 @@ void realTimeHandler(int signo, siginfo_t* info, void* context){
     for(int i=0;i<N;i++){
         if(children[i][0] == info->si_pid){
             children[i][3] = signo -SIGRTMIN;
-            sprintf(buffer, "RT signal received %d\n",children[i][3]);
-            write(1, buffer, strlen(buffer));
-
+            WRITE_MSG("RT signal received %d\n",children[i][3]);
             break;
         }
     }

@@ -20,9 +20,6 @@ void ps(char *s){
 
 
 void childExitHandler(int signo){
-    char buffer[100];
-    sprintf(buffer,"I have to die...: %d\n",getpid());
-    write(1, buffer, strlen(buffer));
     live = 0;
 }
 
@@ -51,7 +48,7 @@ int main() {
     act.sa_handler = childExitHandler;
     sigaction(SIGINT,&act,NULL);
 
-    int length_of_sleeping = rand() % 10*1000000;
+    int length_of_sleeping = rand() % 10000000;
 
     sprintf(buffer,"I live: %d, sleeps %ds \n",getpid(),length_of_sleeping);
     write(1, buffer, strlen(buffer));
@@ -61,8 +58,7 @@ int main() {
     while(live){
 
     }
-   // printf("COS%d\n",length_of_sleeping);
-    //sprintf(buffer,"COS%d\n",length_of_sleeping);
-   // write(1, buffer, strlen(buffer));
+    sprintf(buffer,"I have to die...: %d, I slept: %d us\n",getpid(),length_of_sleeping);
+    write(1, buffer, strlen(buffer));
     return length_of_sleeping;
 }
