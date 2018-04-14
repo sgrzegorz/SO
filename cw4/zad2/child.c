@@ -30,13 +30,12 @@ int main() {
     sigaction(SIGUSR1,&act,NULL);
 
     srand((unsigned int) getpid()+ time(NULL));
-   // int length_of_sleeping = rand() % 1000000;
-     int length_of_sleeping = rand() % 1000;
+    int length_of_sleeping = rand() % 10000000;
     WRITE_MSG("I live: %d, sleeps %ds \n",getpid(),length_of_sleeping);
     usleep(length_of_sleeping);
 //    WRITE_MSG("wwwwwwwwwwwwwwwwwwwwwww\n");
     kill(getppid(),SIGUSR1);
 
     sigsuspend(&mask);
-    return length_of_sleeping;
+    return length_of_sleeping/1000000;
 }
