@@ -23,7 +23,6 @@ volatile int K; //
 volatile int n; // number of existing children
 volatile int k; //number of received requests
 volatile int **children;
-volatile int *signal_queue;
 //children[X][0] child pid
 //children[X][1] if request from child was received
 //children[X][2] if permission was sent
@@ -42,7 +41,7 @@ void parseCommandLineArguments(int argc, char *argv[]);
 int main(int argc,char *argv[]) {
     parseCommandLineArguments(argc,argv);
     int n = 0;
-    int k=0;
+    int k = 0;
 
     struct sigaction act;
     sigemptyset(&act.sa_mask);
@@ -68,7 +67,6 @@ int main(int argc,char *argv[]) {
     for(int i=0;i<N;i++){
         children[i] = calloc(5,sizeof(int));
     }
-    signal_queue = calloc(N,sizeof(int));
 
 
 
@@ -84,11 +82,11 @@ int main(int argc,char *argv[]) {
         }
     }
 
-    printA();
+  //  printA();
 
     while (1){
 
-      WRITE_MSG("In loop, N:%d K:%d n: %d, k: %d\n",N,K,n,k);
+      //WRITE_MSG("In loop, N:%d K:%d n: %d, k: %d\n",N,K,n,k);
      //   printA();
         sleep(1);
     }
@@ -123,7 +121,7 @@ void sigchldHandler(int signo, siginfo_t* info, void* context){
         WRITE_MSG("Child %d killed by signal\n",info->si_pid);
     }
 
-    n--;
+    n = n-1;
     WRITE_MSG("|---->%d\n", n);
     if(n == 0){
         WRITE_MSG("Parent dies\n");
@@ -134,12 +132,12 @@ void sigchldHandler(int signo, siginfo_t* info, void* context){
 
 
 void requestHandler(int signo, siginfo_t* info, void* context){
-    WRITE_MSG("|||---->%d\n", n);
-    WRITE_MSG("%d\n",(int) getChild(info->si_pid));
+    //WRITE_MSG("|||---->%d\n", n);
+    //WRITE_MSG("%d\n",(int) getChild(info->si_pid));
     if(getChild(info->si_pid) == -1) return;
     WRITE_MSG("Father received request from child: %d\n",info->si_pid);
     children[getChild(info->si_pid)][1] = 1;
-    k++;
+    k=k+1;
 
     if( k > K){
         children[getChild(info->si_pid)][2] = 1;
@@ -148,7 +146,7 @@ void requestHandler(int signo, siginfo_t* info, void* context){
         waitpid(info->si_pid,NULL,0);
 
     }else if(k == K){
-        WRITE_MSG("---------------------->%d %d\n",K , k);
+        //WRITE_MSG("---------------------->%d %d\n",K , k);
         for(int i=0;i<N;i++){
             if(children[i][1] == 1 && children[i][0] != -1  ){ //if asked for permission and they exists
                 children[i][2] = 1;
@@ -159,7 +157,7 @@ void requestHandler(int signo, siginfo_t* info, void* context){
             }
         }
     }
-    WRITE_MSG("-REGGG--->%d\n", n);
+    //WRITE_MSG("-REGGG--->%d\n", n);
 }
 
 void realTimeHandler(int signo, siginfo_t* info, void* context){
