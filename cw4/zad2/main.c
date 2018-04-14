@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <time.h>
 #include <string.h>
-#define WRITE_MSG(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
+#define WRITE_MSG(format,...) {char buffer[255];sprintf(buffer,format, ##__VA_ARGS__);write(1, buffer, strlen(buffer));}
 #define maximum_number_of_children 1000
 
 void error(char *s){
@@ -30,21 +30,26 @@ volatile int *signal_queue;
 //children[X][3] number of received real-time signal
 //children[X][4] value returned by child
 
+void sigchldHandler(int signo, siginfo_t* info, void* context);
 void requestHandler(int signo, siginfo_t* info, void* context);
 void printA();
 void realTimeHandler(int signo, siginfo_t* info, void* context);
 void parentExitHandler(int signo, siginfo_t* info, void* context);
 void parseCommandLineArguments(int argc, char *argv[]);
-void sigchldHandler(int signo, siginfo_t* info, void* context);
+
 
 // N-number of children, K-when process will get K requests it'll send singnal to children
 int main(int argc,char *argv[]) {
     parseCommandLineArguments(argc,argv);
-    int n = k =0;
+    int n = 0;
+    int k=0;
 
     struct sigaction act;
     sigemptyset(&act.sa_mask);
     act.sa_flags = SA_NODEFER|SA_SIGINFO;
+
+    act.sa_sigaction = sigchldHandler;
+    if(sigaction(SIGCHLD,&act,NULL) == -1)  printf("Cannot catch SIGCHLD");
 
     act.sa_sigaction = requestHandler;
     if(sigaction(SIGUSR1,&act,NULL) == -1) printf("Cannot catch requestHandler");
@@ -57,8 +62,7 @@ int main(int argc,char *argv[]) {
         if(sigaction(i,&act,NULL) == -1) printf("Ehh");
     }
 
-    act.sa_sigaction = sigchldHandler;
-    if(sigaction(SIGCHLD,&act,NULL) == -1)  printf("Cannot catch SIGINT");
+
 
     children = calloc(N,sizeof(int*));
     for(int i=0;i<N;i++){
@@ -84,7 +88,7 @@ int main(int argc,char *argv[]) {
 
     while (1){
 
-     //   WRITE_MSG("In loop, N:%d K:%d n: %d, k: %d\n",N,K,n,k);
+      WRITE_MSG("In loop, N:%d K:%d n: %d, k: %d\n",N,K,n,k);
      //   printA();
         sleep(1);
     }
@@ -105,27 +109,32 @@ void rmChild(pid_t pid){
             return;
         }
     }
+
+
 }
 
 void sigchldHandler(int signo, siginfo_t* info, void* context){
+    WRITE_MSG("||---->%d\n", n);
     if(info->si_code == CLD_EXITED ){
         children[getChild(info->si_pid)][4] = info->si_status;
-        WRITE_MSG("Child: %d returned: %d \n",info->si_pid, info->si_status);
+        WRITE_MSG("Child: %d returned: %d \n",info->si_pid,info->si_status);
     }else{
         children[getChild(info->si_pid)][4] = -1;
-        WRITE_MSG("Child %d \n killed by signal\n",info->si_pid);
+        WRITE_MSG("Child %d killed by signal\n",info->si_pid);
     }
+
     n--;
-    WRITE_MSG("---->%d\n", n);
+    WRITE_MSG("|---->%d\n", n);
     if(n == 0){
         WRITE_MSG("Parent dies\n");
         exit(0);
     }
-
+    rmChild(info->si_status);
 }
 
 
 void requestHandler(int signo, siginfo_t* info, void* context){
+    WRITE_MSG("|||---->%d\n", n);
     WRITE_MSG("%d\n",(int) getChild(info->si_pid));
     if(getChild(info->si_pid) == -1) return;
     WRITE_MSG("Father received request from child: %d\n",info->si_pid);
@@ -135,13 +144,16 @@ void requestHandler(int signo, siginfo_t* info, void* context){
     if( k > K){
         children[getChild(info->si_pid)][2] = 1;
         kill(info->si_pid,SIGUSR1);
+
         waitpid(info->si_pid,NULL,0);
 
     }else if(k == K){
+        WRITE_MSG("---------------------->%d %d\n",K , k);
         for(int i=0;i<N;i++){
             if(children[i][1] == 1 && children[i][0] != -1  ){ //if asked for permission and they exists
                 children[i][2] = 1;
                 kill(children[i][0],SIGUSR1);
+
                 waitpid(info->si_pid,NULL,0);
 
             }

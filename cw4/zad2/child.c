@@ -17,7 +17,7 @@ void childHandler(int signo){
 
 
 int main() {
-    usleep(100000);
+    sleep(3);
     struct sigaction act;
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
@@ -30,8 +30,8 @@ int main() {
     sigaction(SIGUSR1,&act,NULL);
 
     srand((unsigned int) getpid()+ time(NULL));
-    int length_of_sleeping = rand() % 10000000;
-
+   // int length_of_sleeping = rand() % 1000000;
+     int length_of_sleeping = rand() % 1000;
     WRITE_MSG("I live: %d, sleeps %ds \n",getpid(),length_of_sleeping);
     usleep(length_of_sleeping);
 //    WRITE_MSG("wwwwwwwwwwwwwwwwwwwwwww\n");
