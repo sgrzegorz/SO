@@ -174,7 +174,7 @@ void parentExitHandler(int signo, siginfo_t* info, void* context){
 //--------------------------------------------------------------------------------------------------------------------//
 
 void printA(){
-    char buff[2000];
+    char buff[1000*N];
     sprintf(buff + strlen(buff),"\n");
     for(int j=0;j<5;j++){
         sprintf(buff +strlen(buff),"\n");
@@ -189,7 +189,7 @@ void printA(){
         }
         sprintf(buff + strlen(buff),"|\n");
     }
-    sprintf(buff + strlen(buff),"\n");
+    sprintf(buff + strlen(buff),"n:%d\n",n);
     write(1,buff,strlen(buff));
     buff[0] = '\0';
 
