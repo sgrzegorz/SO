@@ -10,7 +10,19 @@
 volatile int live = 1;
 
 
-void parentAsksChildToDieHandler(int signo){
+void ps(char *s){
+    char buff1[40];
+    sprintf(buff1,s);
+    strcat(buff1,"\n");
+    write(1,buff1,strlen(buff1));
+}
+
+
+
+void childExitHandler(int signo){
+    char buffer[100];
+    sprintf(buffer,"I have to die...: %d\n",getpid());
+    write(1, buffer, strlen(buffer));
     live = 0;
 }
 
@@ -23,24 +35,27 @@ void parentAcceptedRequestHandler(int signo){
     live = 0;
 }
 
+
+
 int main() {
+    ps("I live");
     char buffer[100];
     time_t t;
     srand((unsigned int) getpid()+ time(NULL));
 
     struct sigaction act;
     sigemptyset(&act.sa_mask);
-    act.sa_flags = 0;
+    act.sa_flags = SA_NODEFER;
     act.sa_handler = parentAcceptedRequestHandler;
     sigaction(SIGUSR1,&act,NULL);
-    act.sa_handler = parentAsksChildToDieHandler;
+    act.sa_handler = childExitHandler;
     sigaction(SIGINT,&act,NULL);
 
-    int length_of_sleeping = rand() % 20;
+    int length_of_sleeping = rand() % 10*1000000;
 
-   // sprintf(buffer,"I live: %d, sleeps %ds \n",getpid(),length_of_sleeping);
-   // write(1, buffer, strlen(buffer));
-    sleep(length_of_sleeping);
+    sprintf(buffer,"I live: %d, sleeps %ds \n",getpid(),length_of_sleeping);
+    write(1, buffer, strlen(buffer));
+    usleep(length_of_sleeping);
     kill(getppid(),SIGUSR1);
 
     while(live){

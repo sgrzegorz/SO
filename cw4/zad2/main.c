@@ -18,8 +18,17 @@ void error(char *s){
 
 
 
-volatile int N=40; //final number of children
-volatile int K=40; //
+void ps(char *s){
+    char buff1[40];
+    sprintf(buff1,s);
+    strcat(buff1,"\n");
+    write(1,buff1,strlen(buff1));
+}
+
+
+
+volatile int N; //final number of children
+volatile int K; //
 volatile int n; // number of existing children
 volatile int k; //number of received requests
 volatile int **children;
@@ -30,25 +39,25 @@ volatile int *signal_queue;
 //children[X][3] number of received real-time signal
 //children[X][4] value returned by child
 
-void childRequestHandler(int signo, siginfo_t* info, void* context);
+void requestHandler(int signo, siginfo_t* info, void* context);
 void printA();
 void realTimeHandler(int signo, siginfo_t* info, void* context);
-void killChildrenHandler(int signo, siginfo_t* info, void* context);
-
+void parentExitHandler(int signo, siginfo_t* info, void* context);
+void parseCommandLineArguments(int argc, char *argv[]);
 
 // N-number of children, K-when process will get K requests it'll send singnal to children
-int main() {
-    if(K > N) error("K should be smaller than N");
+int main(int argc,char *argv[]) {
+    parseCommandLineArguments(argc,argv);
     int n = k =0;
 
     struct sigaction act;
     sigemptyset(&act.sa_mask);
     act.sa_flags = SA_NODEFER|SA_SIGINFO;
 
-    act.sa_sigaction = childRequestHandler;
+    act.sa_sigaction = requestHandler;
     if(sigaction(SIGUSR1,&act,NULL) == -1) printf("Cannot catch requestHandler");
 
-    act.sa_sigaction = killChildrenHandler;
+    act.sa_sigaction = parentExitHandler;
     if(sigaction(SIGINT,&act,NULL) == -1)  printf("Cannot catch SIGINT");
 
     act.sa_sigaction = realTimeHandler;
@@ -63,6 +72,14 @@ int main() {
     }
     signal_queue = calloc(N,sizeof(int));
 
+    for(int j=0;j<5;j++){
+        for(int i=0;i<N;i++){
+
+            printf("%i",children[i][j]);
+        }
+        printf("\n");
+    }
+
 
     for(int i=0;i<N;i++){
         pid_t pid = fork();
@@ -76,9 +93,10 @@ int main() {
 
 
     while (1){
-        char buffer[30];
-        sprintf(buffer,"In loop, n: %d, k: %d\n",n,k);
-        write(1, buffer, strlen(buffer));
+        //char buffer[30];
+        //sprintf(buffer,"In loop, N:%d K:%d n: %d, k: %d\n",N,K,n,k);
+        //write(1, buffer, strlen(buffer));
+        printA();
         sleep(1);
     }
 //    while(wait(NULL)){
@@ -91,10 +109,10 @@ int main() {
 }
 
 
-void childRequestHandler(int signo, siginfo_t* info, void* context){
+void requestHandler(int signo, siginfo_t* info, void* context){
     char buffer[100];
-  //  sprintf(buffer, "Father received request from child: %d\n",info->si_pid);
-   // write(1, buffer, strlen(buffer));
+    sprintf(buffer, "Father received request from child: %d\n",info->si_pid);
+    write(1, buffer, strlen(buffer));
 
     int index = -1;
     for(int i=0;i<N;i++){
@@ -143,34 +161,56 @@ void realTimeHandler(int signo, siginfo_t* info, void* context){
     for(int i=0;i<N;i++){
         if(children[i][0] == info->si_pid){
             children[i][3] = signo -SIGRTMIN;
-          //  sprintf(buffer, "RT signal received %d\n",children[i][3]);
-         //   write(1, buffer, strlen(buffer));
-           // printf("RT signal received %d\n",children[i][3]);
+            sprintf(buffer, "RT signal received %d\n",children[i][3]);
+            write(1, buffer, strlen(buffer));
+
             break;
         }
     }
 }
 
-void killChildrenHandler(int signo, siginfo_t* info, void* context){
+void parentExitHandler(int signo, siginfo_t* info, void* context){
     for(int i=0;i<N;i++){
         kill(children[i][0],SIGINT);
     }
+    exit(0);
 }
 
 
 void printA(){
-    printf("\n");
+    char buff[2000];
+    sprintf(buff + strlen(buff),"\n");
     for(int j=0;j<5;j++){
-        if(j==0)printf("%20s","pid");
-        if(j==1)printf("%20s","request");
-        if(j==2)printf("%20s","permission was send?");
-        if(j==3)printf("%20s","real time signal");
-        if(j==4)printf("%20s","returned val");
+        sprintf(buff +strlen(buff),"\n");
+        if(j==0)sprintf(buff + strlen(buff),"%20s","pid");
+        if(j==1)sprintf(buff + strlen(buff),"%20s","request");
+        if(j==2)sprintf(buff + strlen(buff),"%20s","permission was send?");
+        if(j==3)sprintf(buff + strlen(buff),"%20s","real time signal");
+        if(j==4)sprintf(buff + strlen(buff),"%20s","returned val");
 
         for(int i=0;i<N;i++){
-            printf("|%8d", children[i][j]);
+            sprintf(buff + strlen(buff),"|%8d", children[i][j]);
         }
-        printf("|\n");
+        sprintf(buff + strlen(buff),"|\n");
     }
-    printf("\n");
+    sprintf(buff + strlen(buff),"\n");
+    write(1,buff,strlen(buff));
+    buff[0] = '\0';
+
+}
+
+void parseCommandLineArguments(int argc, char *argv[]){
+    void printInfo(){
+        printf("Please use correct format of arguments: ");
+        printf("./zad <limit> <number of children> \n");
+        printf("./zad 35 40\n");
+        exit(-1);
+    }
+    if(argc == 3){
+        K = atoi(argv[1]);
+        N = atoi(argv[2]);
+        if(K > N) error("K should be smaller than N");
+    }else{
+        printInfo();
+    }
 }
