@@ -7,58 +7,36 @@
 #include <errno.h>
 #include <time.h>
 #include <string.h>
-volatile int live = 1;
+#define WRITE_MSG(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 
 
-void ps(char *s){
-    char buff1[40];
-    sprintf(buff1,s);
-    strcat(buff1,"\n");
-    write(1,buff1,strlen(buff1));
-}
-
-
-
-void childExitHandler(int signo){
-    live = 0;
-}
-
-void parentAcceptedRequestHandler(int signo){
-
-    //const char *str = "My parent noticed me\n";
-   // write(1, str, strlen(str));
-    //printf("My parent noticed me: %d \n",getpid());
+void childHandler(int signo){
     kill(getppid(), SIGRTMIN + (rand() % (SIGRTMAX - SIGRTMIN)));
-    live = 0;
 }
 
 
 
 int main() {
-    ps("I live");
-    char buffer[100];
-    time_t t;
-    srand((unsigned int) getpid()+ time(NULL));
-
+    usleep(100000);
     struct sigaction act;
     sigemptyset(&act.sa_mask);
     act.sa_flags = SA_NODEFER;
-    act.sa_handler = parentAcceptedRequestHandler;
-    sigaction(SIGUSR1,&act,NULL);
-    act.sa_handler = childExitHandler;
-    sigaction(SIGINT,&act,NULL);
 
+    act.sa_handler = childHandler;
+    sigaction(SIGUSR1,&act,NULL);
+
+    srand((unsigned int) getpid()+ time(NULL));
     int length_of_sleeping = rand() % 10000000;
 
-    sprintf(buffer,"I live: %d, sleeps %ds \n",getpid(),length_of_sleeping);
-    write(1, buffer, strlen(buffer));
+    WRITE_MSG("I live: %d, sleeps %ds \n",getpid(),length_of_sleeping);
     usleep(length_of_sleeping);
+//    WRITE_MSG("wwwwwwwwwwwwwwwwwwwwwww\n");
     kill(getppid(),SIGUSR1);
 
-    while(live){
+    while(1){
 
     }
-    sprintf(buffer,"I have to die...: %d, I slept: %d us\n",getpid(),length_of_sleeping);
-    write(1, buffer, strlen(buffer));
+    
+    WRITE_MSG("I have to die...: %d, I slept: %d us\n",getpid(),length_of_sleeping);
     return length_of_sleeping;
 }
