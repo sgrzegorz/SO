@@ -78,16 +78,15 @@ int main(int argc,char *argv[]) {
             error("Fork error happened\n");
         }else{
             children[n++][0] = pid;
-            WRITE_MSG("---->%d\n", n);
         }
     }
 
-  //  printA();
+
 
     while (1){
 
       //WRITE_MSG("In loop, N:%d K:%d n: %d, k: %d\n",N,K,n,k);
-     //   printA();
+        printA();
         sleep(1);
     }
 
@@ -112,7 +111,7 @@ void rmChild(pid_t pid){
 }
 
 void sigchldHandler(int signo, siginfo_t* info, void* context){
-    WRITE_MSG("||---->%d\n", n);
+
     if(info->si_code == CLD_EXITED ){
         children[getChild(info->si_pid)][4] = info->si_status;
         WRITE_MSG("Child: %d returned: %d \n",info->si_pid,info->si_status);
@@ -120,9 +119,7 @@ void sigchldHandler(int signo, siginfo_t* info, void* context){
         children[getChild(info->si_pid)][4] = -1;
         WRITE_MSG("Child %d killed by signal\n",info->si_pid);
     }
-
-    n = n-1;
-    WRITE_MSG("|---->%d\n", n);
+    n--;
     if(n == 0){
         WRITE_MSG("Parent dies\n");
         exit(0);
@@ -132,12 +129,11 @@ void sigchldHandler(int signo, siginfo_t* info, void* context){
 
 
 void requestHandler(int signo, siginfo_t* info, void* context){
-    //WRITE_MSG("|||---->%d\n", n);
-    //WRITE_MSG("%d\n",(int) getChild(info->si_pid));
+
     if(getChild(info->si_pid) == -1) return;
     WRITE_MSG("Father received request from child: %d\n",info->si_pid);
     children[getChild(info->si_pid)][1] = 1;
-    k=k+1;
+    k++;
 
     if( k > K){
         children[getChild(info->si_pid)][2] = 1;
@@ -146,7 +142,7 @@ void requestHandler(int signo, siginfo_t* info, void* context){
         waitpid(info->si_pid,NULL,0);
 
     }else if(k == K){
-        //WRITE_MSG("---------------------->%d %d\n",K , k);
+
         for(int i=0;i<N;i++){
             if(children[i][1] == 1 && children[i][0] != -1  ){ //if asked for permission and they exists
                 children[i][2] = 1;
@@ -157,7 +153,7 @@ void requestHandler(int signo, siginfo_t* info, void* context){
             }
         }
     }
-    //WRITE_MSG("-REGGG--->%d\n", n);
+
 }
 
 void realTimeHandler(int signo, siginfo_t* info, void* context){
