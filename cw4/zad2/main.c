@@ -40,8 +40,8 @@ void parseCommandLineArguments(int argc, char *argv[]);
 // N-number of children, K-when process will get K requests it'll send singnal to children
 int main(int argc,char *argv[]) {
     parseCommandLineArguments(argc,argv);
-    int n = 0;
-    int k = 0;
+    n = k =0;
+
 
     struct sigaction act;
     sigemptyset(&act.sa_mask);
