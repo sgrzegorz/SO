@@ -20,7 +20,11 @@ int main() {
     usleep(100000);
     struct sigaction act;
     sigemptyset(&act.sa_mask);
-    act.sa_flags = SA_NODEFER;
+    act.sa_flags = 0;
+
+    sigset_t mask;
+    sigfillset(&mask);
+    sigdelset(&mask, SIGUSR1);
 
     act.sa_handler = childHandler;
     sigaction(SIGUSR1,&act,NULL);
@@ -33,10 +37,6 @@ int main() {
 //    WRITE_MSG("wwwwwwwwwwwwwwwwwwwwwww\n");
     kill(getppid(),SIGUSR1);
 
-    while(1){
-
-    }
-    
-    WRITE_MSG("I have to die...: %d, I slept: %d us\n",getpid(),length_of_sleeping);
+    sigsuspend(&mask);
     return length_of_sleeping;
 }

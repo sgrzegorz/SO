@@ -35,6 +35,7 @@ void printA();
 void realTimeHandler(int signo, siginfo_t* info, void* context);
 void parentExitHandler(int signo, siginfo_t* info, void* context);
 void parseCommandLineArguments(int argc, char *argv[]);
+void sigchldHandler(int signo, siginfo_t* info, void* context);
 
 // N-number of children, K-when process will get K requests it'll send singnal to children
 int main(int argc,char *argv[]) {
@@ -56,6 +57,8 @@ int main(int argc,char *argv[]) {
         if(sigaction(i,&act,NULL) == -1) printf("Ehh");
     }
 
+    act.sa_sigaction = sigchldHandler;
+    if(sigaction(SIGCHLD,&act,NULL) == -1)  printf("Cannot catch SIGINT");
 
     children = calloc(N,sizeof(int*));
     for(int i=0;i<N;i++){
@@ -73,6 +76,7 @@ int main(int argc,char *argv[]) {
             error("Fork error happened\n");
         }else{
             children[n++][0] = pid;
+            WRITE_MSG("---->%d\n", n);
         }
     }
 
@@ -80,28 +84,46 @@ int main(int argc,char *argv[]) {
 
     while (1){
 
-        WRITE_MSG("In loop, N:%d K:%d n: %d, k: %d\n",N,K,n,k);
-      //  printA();
+     //   WRITE_MSG("In loop, N:%d K:%d n: %d, k: %d\n",N,K,n,k);
+     //   printA();
         sleep(1);
     }
 
 }
 
 pid_t getChild(pid_t pid){
-    for(int i=0;i<n;i++){
+    for(int i=0;i<N;i++){
         if(children[i][0] == pid) return i;
     }
     return -1;
 }
 
 void rmChild(pid_t pid){
-    for(int i=0;i<n;i++){
+    for(int i=0;i<N;i++){
         if(children[i][0] == pid){
             children[i][0] = -1;
             return;
         }
     }
 }
+
+void sigchldHandler(int signo, siginfo_t* info, void* context){
+    if(info->si_code == CLD_EXITED ){
+        children[getChild(info->si_pid)][4] = info->si_status;
+        WRITE_MSG("Child: %d returned: %d \n",info->si_pid, info->si_status);
+    }else{
+        children[getChild(info->si_pid)][4] = -1;
+        WRITE_MSG("Child %d \n killed by signal\n",info->si_pid);
+    }
+    n--;
+    WRITE_MSG("---->%d\n", n);
+    if(n == 0){
+        WRITE_MSG("Parent dies\n");
+        exit(0);
+    }
+
+}
+
 
 void requestHandler(int signo, siginfo_t* info, void* context){
     WRITE_MSG("%d\n",(int) getChild(info->si_pid));
@@ -111,39 +133,27 @@ void requestHandler(int signo, siginfo_t* info, void* context){
     k++;
 
     if( k > K){
-
+        children[getChild(info->si_pid)][2] = 1;
         kill(info->si_pid,SIGUSR1);
-        int status;
-        waitpid(info->si_pid,&status,0);
-        if(WIFEXITED(status)){
-            children[getChild(info->si_pid)][4] = WEXITSTATUS(status); //returned value
-        }
+        waitpid(info->si_pid,NULL,0);
 
     }else if(k == K){
         for(int i=0;i<N;i++){
             if(children[i][1] == 1 && children[i][0] != -1  ){ //if asked for permission and they exists
                 children[i][2] = 1;
                 kill(children[i][0],SIGUSR1);
-                int status;
-                waitpid(info->si_pid,&status,0);
-                if(WIFEXITED(status)) children[i][4] = WEXITSTATUS(status);
-                n--;
+                waitpid(info->si_pid,NULL,0);
+
             }
         }
     }
-
-    if(n == 0) exit(0);
+    WRITE_MSG("-REGGG--->%d\n", n);
 }
 
 void realTimeHandler(int signo, siginfo_t* info, void* context){
-
-    for(int i=0;i<N;i++){
-        if(children[i][0] == info->si_pid){
-            children[i][3] = signo -SIGRTMIN;
-            WRITE_MSG("RT signal received %d\n",children[i][3]);
-            break;
-        }
-    }
+    if(getChild(info->si_pid) == -1) return;
+    children[getChild(info->si_pid)][3] =  signo -SIGRTMIN;
+    WRITE_MSG("RT signal received %d\n",signo -SIGRTMIN);
 }
 
 void parentExitHandler(int signo, siginfo_t* info, void* context){
@@ -151,6 +161,7 @@ void parentExitHandler(int signo, siginfo_t* info, void* context){
         pid_t pid = (pid_t) children[i][0];
         if(pid != -1)  kill(pid,SIGKILL);
     }
+    WRITE_MSG("Parent dies SIGINT\n");
     exit(0);
 }
 
@@ -193,3 +204,4 @@ void parseCommandLineArguments(int argc, char *argv[]){
         printInfo();
     }
 }
+
