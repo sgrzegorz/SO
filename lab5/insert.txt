@@ -1,0 +1,9 @@
+echo ddddd
+
+ps -a
+echo kasia
+echo sss
+
+
+
+
