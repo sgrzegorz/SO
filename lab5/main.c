@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
         pid_t pid = fork();
         if(pid == 0){
             if(i==0) {
-                dup2(fd[i][1], STDOUT_FILENO);
+                if(dup2(fd[i][1], STDOUT_FILENO);
             }else if(i == number_of_commands-1){
                 dup2(fd[i][0], STDIN_FILENO);
             }else{
