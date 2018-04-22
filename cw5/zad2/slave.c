@@ -26,8 +26,8 @@ int main(int argc,char *argv[]) {
     int slaves_loop=atoi(argv[2]);
     srand((unsigned int) getpid()+ time(NULL));
     FILE *fd;
-    if(fd = fopen(argv[1], "r") == NULL ) WRITE_MSG("Slave %d couldn't open fifo\n",getpid());
-
+    if((fd = fopen(argv[1], "r") == NULL ) WRITE_MSG("Slave %d couldn't open fifo\n",getpid());
+    WRITE_MSG("%s\n","oal");
     char buf[50];
     for(int i=0;i<slaves_loop;i++){
        char buf[50];
