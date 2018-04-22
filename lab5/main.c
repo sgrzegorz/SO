@@ -9,40 +9,8 @@
 #define WRITE_MSG(format,...) {char buffer[255];sprintf(buffer,format, ##__VA_ARGS__);write(1, buffer, strlen(buffer));}
 #define FAILURE_EXIT(code, format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(code);}
 
-
-
-char* separateWordsInAString(char*string,int length,int size_of_pointers){
-    char *pointers = calloc(size_of_pointers,sizeof(char*));
-    int p_i=0;
-
-    int i=0;
-    for(;i<length;i++){
-        if(string[i] == ' ' || string[i]=='|'){
-            string[i]='\0';
-        }else{
-            break;
-        }
-    }
-    int ifstart = 0;
-    for(;i<length;i++) {
-
-        if(string[i] == '|') pointers[p_i++] = NULL;
-        if(string[i] == ' ' || string[i]=='|'){
-            string[i]='\0';
-            ifstart = 1;
-        }else if(string[i] != ' ' && string[i]!='|' && ifstart ){
-            pointers[p_i++] = string[i];
-            ifstart = 0;
-        }else if(string[i] != ' ' && string[i]!='|' && !ifstart){
-            continue;
-        }
-    }
-    pointers[p_i++] = NULL;
-    return pointers;
-}
-
-int getNumberOfCommands(const char*string,int length){
-    if(string[0] == '|' || string[length-1]) FAILURE_EXIT(-1,"error1 while parsing\n");
+int getNumberOfCommands(const char string[],int length){
+    if(string[0] == '|' || string[length-1] == '|') FAILURE_EXIT(-1,"error1 while parsing\n");
 
     int twoNullPointers = 0;
     int number_of_commands =0;
@@ -59,11 +27,57 @@ int getNumberOfCommands(const char*string,int length){
     return number_of_commands;
 }
 
+char** separateWordsInAString(char*string,int length,char **pointers,int number_of_commands){
+    //char **pointers = calloc(number_of_commands*2,sizeof(char*));
+    int p_i=0;
+
+    int i=0;
+    for(;i<length;i++){
+        if(string[i] == ' ' || string[i]=='|'){
+            string[i]='\0';
+        }else{
+            break;
+        }
+    }
+    int ifstart = 1;
+    for(;i<length;i++) {
+
+        if(string[i] == '|') pointers[p_i++] = NULL;
+        if(string[i] == ' ' || string[i]=='|'){
+            string[i]='\0';
+            ifstart = 1;
+        }else if(string[i] != ' ' && string[i]!='|' && ifstart ){
+            pointers[p_i++] = string+i;
+            ifstart = 0;
+        }else if(string[i] != ' ' && string[i]!='|' && !ifstart){
+            continue;
+        }
+    }
+    pointers[p_i++] = NULL;
+    return pointers;
+}
+
+
+
 int main(int argc, char *argv[])
 {
-    char t[90]= "e|cho ola | echo ola | |echo |ola|";
-    printf("%d",getNumberOfCommands(t,strlen(t)));
 
+    char t[90]= "ls   -l  /home/x/Desktop\0";
+   // printf("%d",getNumberOfCommands(t,strlen(t)));
+   int p_length =2*getNumberOfCommands(t,strlen(t));
+    char **p = calloc(sizeof(char*),p_length);
+    for(int i=0;i<p_length;i++){
+        p[i]=NULL;
+    }
+    p = separateWordsInAString(t,strlen(t),p,p_length);
+
+
+    pid_t pid = fork();
+    if(pid ==0){
+        execvp(p[0],p);
+    }
+    sleep(1);
+    exit(1);
    /*
     char *pointersbuff=separateWordsInAString(t);
     char **pointers[3];
