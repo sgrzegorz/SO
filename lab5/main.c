@@ -9,6 +9,9 @@
 #define WRITE_MSG(format,...) {char buffer[255];sprintf(buffer,format, ##__VA_ARGS__);write(1, buffer, strlen(buffer));}
 #define FAILURE_EXIT(code, format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(code);}
 
+
+
+
 int getNumberOfCommands(const char string[],int length){
     if(string[0] == '|' || string[length-1] == '|') FAILURE_EXIT(-1,"error1 while parsing\n");
 
@@ -27,7 +30,7 @@ int getNumberOfCommands(const char string[],int length){
     return number_of_commands;
 }
 
-char** separateWordsInAString(char*string,int length,char **pointers,int number_of_commands){
+char** putPointersToSeparatedWords(char*string,int length,char **pointers,int number_of_commands){
     //char **pointers = calloc(number_of_commands*2,sizeof(char*));
     int p_i=0;
 
@@ -54,28 +57,56 @@ char** separateWordsInAString(char*string,int length,char **pointers,int number_
         }
     }
     pointers[p_i++] = NULL;
+    pointers[p_i++] = NULL;
     return pointers;
 }
 
 
-
 int main(int argc, char *argv[])
 {
+    //"ls   -l  /home/x/Desktop\0";
+    char line[max_number_of_words_in_line]= "ps -aux | grep -a ala";
+    int number_of_commands = getNumberOfCommands(line,strlen(line));
 
-    char t[90]= "ls   -l  /home/x/Desktop\0";
-   // printf("%d",getNumberOfCommands(t,strlen(t)));
-   int p_length =2*getNumberOfCommands(t,strlen(t));
-    char **p = calloc(sizeof(char*),p_length);
-    for(int i=0;i<p_length;i++){
-        p[i]=NULL;
+    char **word_pointers = calloc(sizeof(char*),max_number_of_words_in_line);
+    word_pointers = putPointersToSeparatedWords(line,strlen(line),word_pointers,max_number_of_words_in_line);
+    int word_pointers_length =0; //big enough
+    for(int i=0;i<max_number_of_words_in_line;i++){
+        if(word_pointers[i]==NULL && word_pointers[i+1]==NULL){
+            word_pointers_length++;
+            break;
+        }
+        word_pointers_length++;
     }
-    p = separateWordsInAString(t,strlen(t),p,p_length);
+
+
+    for(int i=0;i<word_pointers_length;i++){
+        if(word_pointers[i]!=NULL){
+            printf("%s\n",word_pointers[i]);
+        }
+        else if(word_pointers[i]==NULL){
+            printf("0\n");
+        }else{
+            printf("-\n");
+        }
+    }
+
+    char ***command_pointers = calloc(number_of_commands,sizeof(char**));
+    command_pointers[0] = word_pointers;
+    int j = 1;
+    for(int i=1;i<word_pointers_length;i++){
+        if(word_pointers[i-1] == NULL){
+            command_pointers[j++]= word_pointers + i;
+        }
+    }
 
 
     pid_t pid = fork();
     if(pid ==0){
-        execvp(p[0],p);
+        execvp(command_pointers[0],command_pointers);
     }
+
+
     sleep(1);
     exit(1);
    /*
