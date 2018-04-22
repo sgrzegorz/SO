@@ -20,29 +20,29 @@
 #define FAILURE_EXIT(code, format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(code);}
 
 
-int main(int argc,char argv[]){
-    int max_slaves =5;
-    char string = "./cmake-build-debug";
+int main(int argc,char *argv[]){
+    if(argc!=2){
+        WRITE_MSG("MASTER parse error\n");
+        exit(-1);
+    }
+    WRITE_MSG("Master: %d \n",getpid());
 
 
-    for(int i=0;i<max_slaves;i++){
-        pid_t pid = fork();
-        if(pid ==0){
-            execl("./cmake-build-debug/slave",string,NULL);
-            FAILURE_EXIT("Slave failed\n");
-        }
+    if(mkfifo(argv[1],S_IWUSR | S_IRUSR)==-1) FAILURE_EXIT(-1,"Master failed with creating fifo\n");
+    char line[MAX_BUF];
+    WRITE_MSG("1\n");
+    FILE* fd;
+    if((fd= fopen(argv[1], "r")) == NULL) FAILURE_EXIT(-1,"Master failed with opening fifo\n");
+    WRITE_MSG("1\n");
+    WRITE_MSG("Ola\n");
+    while(fgets(line,MAX_BUF,fd) !=NULL){
+
+        WRITE_MSG("Received %s\n",line);
     }
 
-    char buf[MAX_BUF];
-    char string = "./cmake-build-debug";
-    int fd = open(string, O_RDONLY);
-    while(1){
-        read(fd, buf, MAX_BUF);
-        printf("Received: %s\n", buf);
-    }
-    close(fd);
-
-
+    fclose(fd);
+    unlink(argv[1]);
+    WRITE_MSG("Master died... \n");
     return 0;
 }
 

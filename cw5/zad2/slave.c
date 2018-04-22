@@ -16,40 +16,34 @@
 
 
 
-int main(int argc,char argv[]) {
-    srand((unsigned int) getpid()+ time(NULL));
-    char string = argv[1];
-    int N=argv[2];
-    int fd = open(string, O_WRONLY);
+int main(int argc,char *argv[]) {
+    if (argc != 3){
+        WRITE_MSG("Slave parse error\n");
+        exit(-1);
+    }
 
     WRITE_MSG("I live to serve you: %d \n",getpid());
+    int slaves_loop=atoi(argv[2]);
+    srand((unsigned int) getpid()+ time(NULL));
+    FILE *fd;
+    if(fd = fopen(argv[1], "r") == NULL ) WRITE_MSG("Slave %d couldn't open fifo\n",getpid());
 
-
-   for(int i=0;i<N;i++){
-        int length_of_sleeping = (rand() % 3000000)+2000000;
-      usleep(length_of_sleeping);
+    char buf[50];
+    for(int i=0;i<slaves_loop;i++){
+       char buf[50];
+       FILE *f = popen("date","r");
+       fgets(buf,sizeof(buf),f);
+       fclose(f);
+       WRITE_MSG("%s\n",buf);
+       if(fwrite(buf,1,strlen(buf),fd)!=strlen(buf)) WRITE_MSG("Slave couldn't write to pipe\n");
+       int length_of_sleeping = (rand() % 3000000)+2000000;
+       usleep(length_of_sleeping);
    }
 
-    int fd;
-    char * myfifo = "/tmp/myfifo";
-
-    /* create the FIFO (named pipe) */
-    mkfifo(myfifo, 0666);
-
-    /* write "Hi" to the FIFO */
-
-    write(fd, "Hi", sizeof("Hi"));
-    close(fd);
-
-    /* remove the FIFO */
-    unlink(fd);
+    fclose(fd);
+    WRITE_MSG("Slave died...\n");
 
 
-
-
-
-
-    printf("Hello, World!\n");
     return 0;
 }
 
