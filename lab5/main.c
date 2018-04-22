@@ -68,11 +68,7 @@ char** putPointersToSeparatedWords(char*string,int length,char **pointers,int nu
     return pointers;
 }
 
-
-int main(int argc, char *argv[])
-{
-    //"ls   -l  /home/x/Desktop\0";
-    char line[max_number_of_words_in_line]= "ps -ax| grep usr | grep a | grep lib";
+void handleLineWithPipes(char line[]){
     int number_of_commands = getNumberOfCommands(line,strlen(line));
 
     char **word_pointers = calloc(sizeof(char*),max_number_of_words_in_line);
@@ -85,7 +81,6 @@ int main(int argc, char *argv[])
         }
         word_pointers_length++;
     }
-
 
     for(int i=0;i<word_pointers_length;i++){
         if(word_pointers[i]!=NULL){
@@ -112,7 +107,7 @@ int main(int argc, char *argv[])
     for(int i=0;i<number_of_commands-1;i++){
         pipe(fd[i]);
     }
-   dup2(fd[number_of_commands-1][1],STDOUT_FILENO);
+    dup2(fd[number_of_commands-1][1],STDOUT_FILENO);
 
     for(int i=0;i<number_of_commands;i++){
         pid_t pid = fork();
@@ -135,10 +130,10 @@ int main(int argc, char *argv[])
             }
 
             execvp(word_pointers[command[i]],word_pointers+command[i]);
-           // execlp("echo","echo","mala",NULL);
+            // execlp("echo","echo","mala",NULL);
             FAILURE_EXIT(-1,"Problem with fork\n");
         }
-       // usleep(1000);
+        // usleep(1000);
     }
 
     for(int i=0;i<number_of_commands;i++){
@@ -149,6 +144,13 @@ int main(int argc, char *argv[])
 
     pid_t wpid;
     while(wpid = wait(NULL) >0);
+}
+
+int main(int argc, char *argv[])
+{
+    //"ls   -l  /home/x/Desktop\0";
+    char line[max_number_of_words_in_line]= "ps -ax| grep usr | grep a | grep lib";
+    handleLineWithPipes(line);
 
     exit(1);
    /*
