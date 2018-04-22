@@ -1,9 +1,6 @@
-echo ddddd
 
-ps -a
-echo kasia
-echo sss
+echo kot am | grep kot | grep am
 
+echo ala ma kota | grep kota
 
-
-
+ps -aux | grep ?
