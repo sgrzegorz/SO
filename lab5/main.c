@@ -10,7 +10,16 @@
 #define FAILURE_EXIT(code, format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(code);}
 
 int getNumberOfCommands(const char string[],int length){
-    if(string[0] == '|' || string[length-1] == '|') FAILURE_EXIT(-1,"error1 while parsing\n");
+
+    for(int i=length-1;i>=0;i--){
+        if(string[i] != ' ' && string[i]!= '|') break;
+        if(string[i] == '|') FAILURE_EXIT(-1,"error3 parsing, incorrect end of line\n");
+    }
+
+    for(int i=0;i<length;i++){
+        if(string[i] != ' ' && string[i]!= '|') break;
+        if(string[i] == '|') FAILURE_EXIT(-1,"error3 parsing, incorrect begin of line\n");
+    }
 
     int twoNullPointers = 0;
     int number_of_commands =0;
@@ -22,10 +31,6 @@ int getNumberOfCommands(const char string[],int length){
         }
         if(string[i]!='|') twoNullPointers = 0;
 
-    }
-    for(int i=string[length-1];i>=0;i--){
-        if(string[i] != ' ' && string[i]!= '|') break;
-        if(string[i] == '|') FAILURE_EXIT(-1,"error3 parsing, incorrect end of line\n");
     }
 
     number_of_commands+=1; //number of commands is one bigger than number of sign '|'
@@ -67,7 +72,7 @@ char** putPointersToSeparatedWords(char*string,int length,char **pointers,int nu
 int main(int argc, char *argv[])
 {
     //"ls   -l  /home/x/Desktop\0";
-    char line[max_number_of_words_in_line]= "ps -ax| grep usr   |   ";
+    char line[max_number_of_words_in_line]= "ps -ax| grep usr | grep a | grep lib";
     int number_of_commands = getNumberOfCommands(line,strlen(line));
 
     char **word_pointers = calloc(sizeof(char*),max_number_of_words_in_line);
@@ -133,7 +138,7 @@ int main(int argc, char *argv[])
            // execlp("echo","echo","mala",NULL);
             FAILURE_EXIT(-1,"Problem with fork\n");
         }
-        usleep(1000);
+       // usleep(1000);
     }
 
     for(int i=0;i<number_of_commands;i++){
