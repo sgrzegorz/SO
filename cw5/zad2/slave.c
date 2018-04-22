@@ -25,15 +25,15 @@ int main(int argc,char *argv[]) {
     WRITE_MSG("I live to serve you: %d \n",getpid());
     int slaves_loop=atoi(argv[2]);
     srand((unsigned int) getpid()+ time(NULL));
-    FILE *fd = fopen(argv[1], "r"); if(fd == NULL) WRITE_MSG("Slave %d couldn't open fifo\n",getpid());
-    WRITE_MSG("%s\n","oal");
-    char buf[50];
+    FILE *fd = fopen(argv[1], "a"); if(fd == NULL) WRITE_MSG("Slave %d couldn't open fifo\n",getpid());
+
+
     for(int i=0;i<slaves_loop;i++){
-       char buf[50];
+       char buf[256];
        FILE *f = popen("date","r");
        fgets(buf,sizeof(buf),f);
        fclose(f);
-       WRITE_MSG("%s\n",buf);
+       //WRITE_MSG("%s\n",buf);
        if(fwrite(buf,1,strlen(buf),fd)!=strlen(buf)) WRITE_MSG("Slave couldn't write to pipe\n");
        int length_of_sleeping = (rand() % 3000000)+2000000;
        usleep(length_of_sleeping);
