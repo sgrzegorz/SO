@@ -9,9 +9,6 @@
 #define WRITE_MSG(format,...) {char buffer[255];sprintf(buffer,format, ##__VA_ARGS__);write(1, buffer, strlen(buffer));}
 #define FAILURE_EXIT(code, format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(code);}
 
-
-
-
 int getNumberOfCommands(const char string[],int length){
     if(string[0] == '|' || string[length-1] == '|') FAILURE_EXIT(-1,"error1 while parsing\n");
 
@@ -91,22 +88,45 @@ int main(int argc, char *argv[])
         }
     }
 
-    char ***command_pointers = calloc(number_of_commands,sizeof(char**));
-    command_pointers[0] = word_pointers;
+    int command[number_of_commands];
+    if(word_pointers[0]==NULL) FAILURE_EXIT(-1,"Error while parsing3\n");
+    command[0] = 0;
     int j = 1;
     for(int i=1;i<word_pointers_length;i++){
         if(word_pointers[i-1] == NULL){
-            command_pointers[j++]= word_pointers + i;
+            command[j++] = i;
         }
     }
+//    char ***command_pointers = calloc(number_of_commands,sizeof(char**));
+//    command_pointers[0] = word_pointers;
 
 
-    pid_t pid = fork();
-    if(pid ==0){
-        execvp(command_pointers[0],command_pointers);
+    int fd[number_of_commands][2];
+    for(int i=0;i<number_of_commands;i++){
+        pipe(fd[i]);
+    }
+    dup2(fd[number_of_commands-1][1],STDOUT_FILENO);
+
+    for(int i=0;i<number_of_commands;i++){
+        pid_t pid = fork();
+        if(pid == 0){
+            if(i==0) {
+                dup2(fd[i][1], STDOUT_FILENO);
+            }else if(i == number_of_commands-1){
+                dup2(fd[i][0], STDIN_FILENO);
+            }else{
+                dup2(fd[i][1],STDOUT_FILENO);
+                dup2(fd[i][0],STDIN_FILENO);
+            }
+            read(0,200,200);
+            execvp(word_pointers[command[i]],word_pointers+command[i]);
+            FAILURE_EXIT(-1,"Problem with fork\n");
+        }
+        usleep(1000);
     }
 
-
+    pid_t wpid;
+    while(wpid = wait(NULL) >0);
     sleep(1);
     exit(1);
    /*
