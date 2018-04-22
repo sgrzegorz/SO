@@ -1,0 +1,4 @@
+Wszystko działa.
+Uruchamiamy:
+cd cmake-build-debug
+./zad
