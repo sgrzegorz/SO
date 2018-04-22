@@ -1,19 +1,9 @@
 #include <stdio.h>
-#include <stdio.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
-#include <sys/wait.h>
-#include <errno.h>
-#include <time.h>
 #include<sys/stat.h>
 #include <string.h>
-#include<sys/types.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <unistd.h>
+
 #define MAX_BUF 10000
 
 #define WRITE_MSG(format,...) {char buffer[255];sprintf(buffer,format, ##__VA_ARGS__);write(1, buffer, strlen(buffer));}
