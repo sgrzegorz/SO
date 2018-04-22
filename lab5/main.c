@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/wait.h>
 #define max_length_of_line 100
 #define max_number_of_words_in_line  100
 

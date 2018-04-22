@@ -1,4 +1,6 @@
 
+ps -aux | grep ?
+
 echo kot am | grep kot | grep am
 
 echo ala ma kota | grep kota
