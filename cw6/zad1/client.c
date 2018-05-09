@@ -8,7 +8,7 @@
 #include <signal.h>
 #include <zconf.h>
 #include "settings.h"
-#define FAILURE_EXIT(format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(-1); }
+#define FAILURE_EXIT(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));exit(-1);}
 #define WRITE_MSG(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 #define W(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 
@@ -28,12 +28,12 @@ int main() {
     if(client_queue == -1) FAILURE_EXIT("%s\n","client_queue wasn't created");
 
 
-    printf("fa\n");
+
 
     key_t public_key = ftok( getenv("HOME"),PROJECT_ID);
     server_queue = msgget(public_key, 0);
-    printf("fa\n");
-    if (server_queue == -1) FAILURE_EXIT("server_queue wasn't opened by client: %s\n");
+
+    if (server_queue == -1) FAILURE_EXIT("server_queue wasn't opened by client.\n");
 
 
 
