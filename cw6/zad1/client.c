@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <memory.h>
 #include <signal.h>
+#include <zconf.h>
 #include "settings.h"
 #define FAILURE_EXIT(format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(-1); }
 int server_queue;
@@ -19,21 +20,22 @@ void intHandler(int dummy) {
 int main() {
     signal(SIGINT, intHandler);
 
+    client_queue = msgget(IPC_PRIVATE, IPC_CREAT | IPC_EXCL|0666);
+    if(client_queue == -1) FAILURE_EXIT("%s\n","client_queue wasn't created");
 
-    if(client_queue = msgget(IPC_PRIVATE, IPC_CREAT | IPC_EXCL|0666) == -1) FAILURE_EXIT("%s\n","client_queue wasn't created");
+    Message  msg;
+    msg.type=1;
 
-    Message  *msg = calloc(1,sizeof(Message));
-    msg->type=0;
-
-    strcpy(msg->text,"adffaffa");
+    strcpy(msg.text,"adffaffa");
+    printf("%s",msg.text);
     key_t public_key = ftok( getenv("HOME"),PROJECT_ID);
     server_queue = msgget(public_key, 0);
 
-    msgsnd(server_queue,&msg,sizeof(msg->text),IPC_NOWAIT);
+    msgsnd(server_queue,&msg,sizeof(msg.text),0); //default block until is place in queue
 
-    printf("%d\n",client_queue);
+    printf("%s\n",msg.text);
 
-
+    sleep(3);
     if(msgctl(client_queue,IPC_RMID,NULL)== -1) FAILURE_EXIT("Couldn't delete client queue: %s\n",strerror(errno) );
     return 0;
 }

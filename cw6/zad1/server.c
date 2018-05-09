@@ -7,6 +7,11 @@
 #include <errno.h>
 #include <memory.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define FAILURE_EXIT(format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(-1); }
 //sudo ipcrm --all=msg
@@ -23,19 +28,15 @@ int main() {
     signal(SIGINT, intHandler);
 
     key_t public_key = ftok(getenv("HOME"), PROJECT_ID);
-
-//   int server_queue = msgget(public_key, 0);
-//    if (server_queue != -1) msgctl(server_queue, IPC_RMID, NULL);
-    printf("!%s\n",strerror(errno));
-
     server_queue = msgget(public_key, IPC_CREAT | IPC_EXCL|0777);
     if (server_queue == -1) FAILURE_EXIT("server_queue wasn't created: %s", strerror(errno));
-    printf("%d\n",server_queue);
 
 
-    int k = msgrcv(server_queue,&msg,sizeof(msg)-sizeof(msg.type),0,0);
-    printf("-->%d\n,",k);
-    printf("!%s\n",strerror(errno));
+    int k = msgrcv(server_queue,&msg,sizeof(msg.text),1,0);
+
+
+    printf("-->%d\n",k);
+
     printf("%s\n",msg.text);
 
 
