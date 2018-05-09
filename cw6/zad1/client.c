@@ -32,9 +32,9 @@ int main() {
 
     key_t public_key = ftok( getenv("HOME"),PROJECT_ID);
     server_queue = msgget(public_key, 0);
-
-    if (server_queue == -1) FAILURE_EXIT("server_queue wasn't opened by client: %s\n");
     printf("fa\n");
+    if (server_queue == -1) FAILURE_EXIT("server_queue wasn't opened by client: %s\n");
+
 
 
     msg.type= HELLO;

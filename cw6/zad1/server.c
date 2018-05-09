@@ -27,7 +27,7 @@ void intHandler(int dummy) {
 }
 
 void addNewClient(){
-    int client_queue = atoi(msg.type);
+    int client_queue = atoi(msg.text);
     W("%d d\n",client_queue);
     if(active_clients >= MAXCLIENTS) FAILURE_EXIT("Too many clients\n");
     for(int i=0;i<MAXCLIENTS;i++){
@@ -36,9 +36,9 @@ void addNewClient(){
             break;
         }
     }
-    W("d\n");
+
     msgsnd(client_queue,&msg,sizeof(msg.text),0);
-    W("d\n");
+
 }
 
 void handleMirror(){
