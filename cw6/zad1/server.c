@@ -42,7 +42,13 @@ void addNewClient(){
 }
 
 void handleMirror(){
-
+    int j=0;
+    char buff[TEXT_SIZE];
+    for(int i=strlen(msg.text);i>=0;i--){
+        buff[j++] = msg.text[i];
+    }
+    strcpy(msg.text,buff);
+//    msgsnd(client_queue,&msg,MSG_SIZE,0);
 }
 
 void handleCalc(){
@@ -50,6 +56,7 @@ void handleCalc(){
 }
 
 void handleTime(){
+
 
 }
 
@@ -71,7 +78,7 @@ int main() {
 
     while(1){
         WRITE_MSG("Server waits for message\n");
-        int result = msgrcv(server_queue,&msg,sizeof(msg.text),0,0);
+        int result = msgrcv(server_queue,&msg,MSG_SIZE,0,0);
         if(result <0) FAILURE_EXIT("%s\n","Problem with main server loop");
 
         WRITE_MSG("Server reveived: %ld %s\n",msg.type,msg.text);

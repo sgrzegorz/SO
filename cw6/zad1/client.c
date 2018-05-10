@@ -39,15 +39,15 @@ int main() {
 
     msg.type= HELLO;
     sprintf(msg.text,"%d",client_queue);
-    msgsnd(server_queue,&msg,sizeof(msg.text),0);
+    msgsnd(server_queue,&msg,MSG_SIZE,0);
     printf("fa\n");
 
-    msgrcv(client_queue,&msg,sizeof(msg.text),0,0);
+    msgrcv(client_queue,&msg,MSG_SIZE,0,0);
     printf("%s<---",msg.text);
 
     msg.type=MIRROR;
     strcpy(msg.text,"adffaffa");
-    msgsnd(server_queue,&msg,sizeof(msg.text),0); //default block until is place in queue
+    msgsnd(server_queue,&msg,MSG_SIZE,0); //default block until is place in queue
 
     printf("%s\n",msg.text);
 
