@@ -32,18 +32,18 @@ int main() {
 
     key_t public_key = ftok( getenv("HOME"),PROJECT_ID);
     server_queue = msgget(public_key, 0);
-
     if (server_queue == -1) FAILURE_EXIT("server_queue wasn't opened by client.\n");
-
-
 
     msg.type= HELLO;
     msg.client_queue = client_queue;
     strcpy(msg.text,"");
     msgsnd(server_queue,&msg,MSG_SIZE,0);
-    printf("fa\n");
 
     msgrcv(client_queue,&msg,MSG_SIZE,0,0);
+    while(1){
+
+    }
+
     printf("%s<---",msg.text);
 
     msg.type=MIRROR;

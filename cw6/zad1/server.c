@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <zconf.h>
+#include <time.h>
 
 #define WRITE_MSG(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 #define FAILURE_EXIT(format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(-1); }
@@ -94,8 +95,10 @@ void handleCalc(){
 }
 
 void handleTime(){
-
-
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    strcpy(msg.text,("%d-%d-%d %d:%d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min));
+    msgsnd(msg.client_queue,&msg,MSG_SIZE,0);
 }
 
 void removeClient(){
