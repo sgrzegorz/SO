@@ -55,6 +55,25 @@ void handleMirror(){
 
 void handleCalc(){
 
+    char *token;
+    token = strtok(msg.text," ");
+    char *type;
+    int first,second;
+    int loop=0;
+    while( token != NULL ) {
+
+        if(loop==0) type = token;
+
+        if(loop==1) first = atoi(token);
+        if(loop==2) second = atoi(token);
+
+
+        token = strtok(NULL," ");
+        loop++;
+    }
+
+    printf( " %s %d \n", type,first-second );
+
 
     switch(type){
         case strcmp(type,"ADD") == 0:
