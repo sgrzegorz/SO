@@ -38,7 +38,8 @@ int main() {
 
 
     msg.type= HELLO;
-    sprintf(msg.text,"%d",client_queue);
+    msg.client_queue = client_queue;
+    strcpy(msg.text,"");
     msgsnd(server_queue,&msg,MSG_SIZE,0);
     printf("fa\n");
 

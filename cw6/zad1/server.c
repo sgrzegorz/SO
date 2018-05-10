@@ -27,17 +27,17 @@ void intHandler(int dummy) {
 }
 
 void addNewClient(){
-    int client_queue = atoi(msg.text);
+    int client_queue = msg.client_queue;
     W("%d d\n",client_queue);
     if(active_clients >= MAXCLIENTS) FAILURE_EXIT("Too many clients\n");
-    for(int i=0;i<MAXCLIENTS;i++){
-        if(client[i]!=-1){
+    for(int i=0;i<MAXCLIENTS;i++) {
+        if (client[i] != -1) {
             client[i] = client_queue;
             break;
         }
     }
-
-    msgsnd(client_queue,&msg,sizeof(msg.text),0);
+    msg.client_queue = client_queue;
+    msgsnd(client_queue,&msg,MSG_SIZE,0);
 
 }
 
@@ -47,12 +47,27 @@ void handleMirror(){
     for(int i=strlen(msg.text);i>=0;i--){
         buff[j++] = msg.text[i];
     }
+
     strcpy(msg.text,buff);
-//    msgsnd(client_queue,&msg,MSG_SIZE,0);
+    printf("%s",buff);
+    msgsnd(msg.client_queue,&msg,MSG_SIZE,0);
 }
 
 void handleCalc(){
 
+
+    switch(type){
+        case strcmp(type,"ADD") == 0:
+            break;
+        case strcmp(type,"MUL") == 0:
+            break;
+        case strcmp(type,"SUB") == 0:
+            break;
+        case strcmp(type,"DIV") == 0:
+            break;
+        default:
+            FAILURE_EXIT("Incorrect calculation type\n");
+    }
 }
 
 void handleTime(){
@@ -82,6 +97,7 @@ int main() {
         if(result <0) FAILURE_EXIT("%s\n","Problem with main server loop");
 
         WRITE_MSG("Server reveived: %ld %s\n",msg.type,msg.text);
+
         W("1111\n");
         switch(msg.type){
 
