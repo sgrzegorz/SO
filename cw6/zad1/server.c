@@ -12,6 +12,8 @@
 #include <sys/msg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <zconf.h>
+
 #define WRITE_MSG(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 #define FAILURE_EXIT(format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(-1); }
 #define W(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
@@ -73,20 +75,22 @@ void handleCalc(){
     }
 
     printf( " %s %d \n", type,first-second );
-
-
-    switch(type){
-        case strcmp(type,"ADD") == 0:
-            break;
-        case strcmp(type,"MUL") == 0:
-            break;
-        case strcmp(type,"SUB") == 0:
-            break;
-        case strcmp(type,"DIV") == 0:
-            break;
-        default:
-            FAILURE_EXIT("Incorrect calculation type\n");
+    int result;
+    if(strcmp(type,"ADD")==0){
+        result = first+second;
+    }else if(strcmp(type,"SUB")==0){
+        result = first - second;
+    }else if(strcmp(type,"MUL")==0){
+        result = first *second;
+    }else if(strcmp(type,"DIV")==0){
+        result = first / second;
+    }else{
+        WRITE_MSG("Incorrect calc data\n");
+        exit(0);
     }
+    sprintf(msg.text, "%d", result);
+    msgsnd(msg.client_queue,&msg,MSG_SIZE,0);
+
 }
 
 void handleTime(){
