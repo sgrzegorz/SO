@@ -3,7 +3,7 @@
 
 #define PROJECT_ID 0xAF
 #define MAXCLIENTS 128
-#define TEXT_SIZE 100
+#define TEXT_SIZE 4096
 
 typedef struct {
     long   type;       /* Message type. */

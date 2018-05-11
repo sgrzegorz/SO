@@ -15,6 +15,7 @@
 #include <zconf.h>
 #include <time.h>
 
+int end_task =0;
 #define WRITE_MSG(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 #define FAILURE_EXIT(format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(-1); }
 #define W(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
@@ -25,11 +26,13 @@ int client[MAXCLIENTS];
 int active_clients = 0;
 
 void intHandler(int dummy) {
+    WRITE_MSG("Server is closed\n");
     if(msgctl(server_queue,IPC_RMID,NULL)== -1) FAILURE_EXIT("Couldn't delete server queue from handler: %s\n",strerror(errno) );
     exit(0);
 }
 
 void addNewClient(){
+    atexit(intHandler);
     int client_queue = msg.client_queue;
     W("%d d\n",client_queue);
     if(active_clients >= MAXCLIENTS) FAILURE_EXIT("Too many clients\n");
@@ -39,6 +42,8 @@ void addNewClient(){
             break;
         }
     }
+    int result = msgget(client_queue,0);
+    if(result == -1) WRITE_MSG("Couldn't open client's queue\n");
     msg.client_queue = client_queue;
     msgsnd(client_queue,&msg,MSG_SIZE,0);
 
@@ -101,8 +106,11 @@ void handleTime(){
     msgsnd(msg.client_queue,&msg,MSG_SIZE,0);
 }
 
-void removeClient(){
+void handleEND(){
+    while(1){
 
+    }
+    exit(0);
 }
 
 int main() {
@@ -118,32 +126,36 @@ int main() {
 
 
     while(1){
+        if(end_task){
+            struct msqid_ds buf;
+            msgctl(public_key,IPC_STAT,&buf);
+            if (buf.msg_qnum == 0) break;
+        }
         WRITE_MSG("Server waits for message\n");
         int result = msgrcv(server_queue,&msg,MSG_SIZE,0,0);
         if(result <0) FAILURE_EXIT("%s\n","Problem with main server loop");
 
-        WRITE_MSG("Server reveived: %ld %s\n",msg.type,msg.text);
-
-        W("1111\n");
         switch(msg.type){
 
             case HELLO:
-            W("d\n");
+                WRITE_MSG("Server received: HELLO\n");
                 addNewClient();
                 break;
             case MIRROR:
+                WRITE_MSG("Server received: MIRROR\n");
                 handleMirror();
                 break;
             case CALC:
-            W("dd1\n");
+                WRITE_MSG("Server received CALC\n");
                 handleCalc();
                 break;
             case TIME:
+                WRITE_MSG("Server received TIME\n");
                 handleTime();
                 break;
             case END:
-            W("dvv\n");
-                removeClient();
+                WRITE_MSG("Server received END\n");
+                end_task =1;
                 break;
 
         }
