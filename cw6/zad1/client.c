@@ -17,17 +17,17 @@ volatile int client_queue;
 Message  msg;
 
 void intHandler() {
-    WRITE_MSG("Client is closed\n");
-    if(msgctl(client_queue,IPC_RMID,NULL)== -1) FAILURE_EXIT("Couldn't delete client queue from handler: %s\n",strerror(errno) );
     exit(0);
 }
 
-void parseString(){
-
+void atexitFunction(){
+    WRITE_MSG("Client is being closed\n");
+    if(msgctl(client_queue,IPC_RMID,NULL)== -1) FAILURE_EXIT("Couldn't delete client queue from handler: %s\n",strerror(errno) );
 }
 
+
 int main() {
-    atexit(intHandler);
+    atexit(atexitFunction);
     signal(SIGINT, intHandler);
 
     key_t client_key = ftok( getenv("HOME"),getpid());
@@ -42,7 +42,7 @@ int main() {
     msg.pid = getpid();
     msgsnd(server_queue,&msg,MSG_SIZE,0);
     msgrcv(client_queue,&msg,MSG_SIZE,0,0);
-
+    printf("Client connected to server: %s\n",msg.text);
 
     while(1){
 

@@ -25,7 +25,6 @@ Message msg;
 int client[MAXCLIENTS][2];
 int active_clients = 0;
 
-void intHandler();
 void addNewClient();
 void handleMirror();
 void handleCalc();
@@ -33,10 +32,18 @@ void handleTime();
 void handleEND();
 int getQueueID();
 
+void atexitFunction(){
+    WRITE_MSG("Server is being closed\n");
+    if(msgctl(server_queue,IPC_RMID,NULL)== -1) FAILURE_EXIT("Couldn't delete server queue from handler: %s\n",strerror(errno) );
+}
+
+void intHandler() {
+    exit(0);
+}
 
 
 int main() {
-    if(atexit(intHandler)==-1)FAILURE_EXIT("Registering client's atexit failed!\n");
+    if(atexit(atexitFunction)==-1)FAILURE_EXIT("Registering client's atexit failed!\n");
     signal(SIGINT, intHandler);
 
     key_t public_key = ftok(getenv("HOME"), PROJECT_ID);
@@ -94,11 +101,8 @@ int main() {
 /////////////////////////////////////////////////////////////////////////////
 
 
-void intHandler() {
-    WRITE_MSG("Server is closed\n");
-    if(msgctl(server_queue,IPC_RMID,NULL)== -1) FAILURE_EXIT("Couldn't delete server queue from handler: %s\n",strerror(errno) );
-    exit(0);
-}
+
+
 
 void addNewClient(){
     int client_queue=-1;
@@ -110,27 +114,34 @@ void addNewClient(){
 
     for(int i=0;i<MAXCLIENTS;i++){
         if(client[i][0]==-1){
-            client[i][0] == msg.pid;
             key_t client_key = ftok( getenv("HOME"),msg.pid);
             client_queue = msgget(client_key,0);
+
+            client[i][0] == msg.pid;
+            client[i][1] = client_queue;
+            printf("%d\n",client[i][0]);
             if(client_queue == -1){
                 WRITE_MSG("Couldn't open client's queue !%d!\n",client_queue);
                 kill(SIGINT,msg.pid);
                 return;
             }
-            client[i][1] = client_queue;
+
+            break;
         }
     }
 
-    strcpy(msg.text,"ok. Server opened client's queue\n");
+
+    char buf[40];
+    sprintf(buf,"%d",msg.pid);
+    strcpy(msg.text,buf);
     msgsnd(client_queue,&msg,MSG_SIZE,0);
 
 }
 
 void handleMirror(){
-    pritnf("---->%s\n",msg.text);
+//    pritnf("---->%s\n",msg.text);
     int client_queue = getQueueID();
-
+    printf("<%d>\n",client_queue);
     char buff[TEXT_SIZE]; int j=0;
     for(int i=strlen(msg.text);i>=0;i--){
         buff[j++] = msg.text[i];
@@ -196,11 +207,12 @@ void handleTime(){
 int getQueueID(){
     int client_queue =-1;
     for(int i=0;i<MAXCLIENTS;i++){
-        if(client[i][0]==msg.pid){
+        printf("%d,%d\n",client[i][0],msg.pid);
+        if(client[i][0]== msg.pid){
             client_queue = client[i][1];
             break;
         }
     }
+    if(client_queue==-1) printf("Getting client_queue failed\n");
     return client_queue;
-
 }
