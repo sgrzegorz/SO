@@ -31,6 +31,7 @@ void handleCalc();
 void handleTime();
 void handleEND();
 int getQueueID();
+void removeClient();
 
 void atexitFunction(){
     WRITE_MSG("Server is being closed\n");
@@ -64,7 +65,7 @@ int main() {
             msgctl(public_key,IPC_STAT,&buf);
             if (buf.msg_qnum == 0) break;
         }
-        WRITE_MSG("Server waits for message\n");
+        WRITE_MSG("Server waits for message:\n");
         int result = msgrcv(server_queue,&msg,MSG_SIZE,0,0);
         if(result <0) FAILURE_EXIT("%s\n","Problem with main server loop");
 
@@ -79,17 +80,20 @@ int main() {
                 handleMirror();
                 break;
             case CALC:
-                WRITE_MSG("Server received CALC\n");
+                WRITE_MSG("Server received: CALC\n");
                 handleCalc();
                 break;
             case TIME:
-                WRITE_MSG("Server received TIME\n");
+                WRITE_MSG("Server received: TIME\n");
                 handleTime();
                 break;
             case END:
-                WRITE_MSG("Server received END\n");
+                WRITE_MSG("Server received: END\n");
                 end_task =1;
                 break;
+            case STOP:
+                WRITE_MSG("Server received: STOP\n");
+                removeClient();
 
         }
 
@@ -101,7 +105,14 @@ int main() {
 /////////////////////////////////////////////////////////////////////////////
 
 
-
+void removeClient(){
+    for(int i=0;i<MAXCLIENTS;i++){
+        if(client[i][0]== msg.pid){
+            client[i][0] = -1;
+            client[i][1] = -1;
+        }
+    }
+}
 
 
 void addNewClient(){

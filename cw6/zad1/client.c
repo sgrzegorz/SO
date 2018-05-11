@@ -17,6 +17,8 @@ volatile int client_queue;
 Message  msg;
 
 void intHandler() {
+    msg.type =STOP;
+    msgsnd(server_queue,&msg,MSG_SIZE,0);
     exit(0);
 }
 

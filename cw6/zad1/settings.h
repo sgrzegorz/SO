@@ -3,7 +3,7 @@
 
 #define PROJECT_ID 0xAF
 #define MAXCLIENTS 128
-#define TEXT_SIZE 4096
+#define TEXT_SIZE 254
 
 typedef struct {
     long   type;       /* Message type. */
@@ -11,7 +11,7 @@ typedef struct {
     pid_t pid;
 }Message;
 
-typedef enum {MIRROR=1, CALC=2, TIME=3,END=4,HELLO=5 }Type;
+typedef enum {MIRROR=1, CALC=2, TIME=3,END=4,HELLO=5,STOP=6 }Type;
 const size_t MSG_SIZE = sizeof(Message) - sizeof(long);
 
 
