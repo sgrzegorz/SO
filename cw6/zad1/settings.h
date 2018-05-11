@@ -6,12 +6,14 @@
 #define TEXT_SIZE 254
 
 typedef struct {
-    long   type;       /* Message type. */
-    char   text[TEXT_SIZE];    /* Message text. */
+    long type;       /* Message type. */
+    char text[TEXT_SIZE];    /* Message text. */
     pid_t pid;
-}Message;
+} Message;
 
-typedef enum {MIRROR=1, CALC=2, TIME=3,END=4,HELLO=5,STOP=6 }Type;
+typedef enum {
+    MIRROR = 1, CALC = 2, TIME = 3, END = 4, HELLO = 5, STOP = 6
+} Type;
 const size_t MSG_SIZE = sizeof(Message) - sizeof(long);
 
 

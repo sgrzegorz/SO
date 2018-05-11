@@ -15,7 +15,7 @@
 #include <zconf.h>
 #include <time.h>
 
-int end_task =0;
+int end_task = 0;
 #define WRITE_MSG(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 #define FAILURE_EXIT(format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(-1); }
 #define W(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
@@ -26,16 +26,23 @@ int client[MAXCLIENTS][2];
 int active_clients = 0;
 
 void addNewClient();
+
 void handleMirror();
+
 void handleCalc();
+
 void handleTime();
+
 void handleEND();
+
 int getQueueID();
+
 void removeClient();
 
-void atexitFunction(){
+void atexitFunction() {
     WRITE_MSG("Server is being closed\n");
-    if(msgctl(server_queue,IPC_RMID,NULL)== -1) FAILURE_EXIT("Couldn't delete server queue from handler: %s\n",strerror(errno) );
+    if (msgctl(server_queue, IPC_RMID, NULL) == -1) FAILURE_EXIT("Couldn't delete server queue from handler: %s\n",
+                                                                 strerror(errno));
 }
 
 void intHandler() {
@@ -44,55 +51,47 @@ void intHandler() {
 
 
 int main() {
-    if(atexit(atexitFunction)==-1)FAILURE_EXIT("Registering client's atexit failed!\n");
+    if (atexit(atexitFunction) == -1) FAILURE_EXIT("Registering client's atexit failed!\n");
     signal(SIGINT, intHandler);
 
     key_t public_key = ftok(getenv("HOME"), PROJECT_ID);
-    server_queue = msgget(public_key, IPC_CREAT | IPC_EXCL|0777);
+    server_queue = msgget(public_key, IPC_CREAT | IPC_EXCL | 0777);
     if (server_queue == -1) FAILURE_EXIT("server_queue wasn't created: %s\n", strerror(errno));
 
-    for(int i=0;i<MAXCLIENTS;i++){
-        client[i][0]=-1;
-        client[i][1]=-1;
+    for (int i = 0; i < MAXCLIENTS; i++) {
+        client[i][0] = -1;
+        client[i][1] = -1;
     }
 
 
-
-
-    while(1){
-        if(end_task){
+    while (1) {
+        if (end_task) {
             struct msqid_ds buf;
-            msgctl(public_key,IPC_STAT,&buf);
+            msgctl(public_key, IPC_STAT, &buf);
             if (buf.msg_qnum == 0) break;
         }
         WRITE_MSG("Server waits for message:\n");
-        int result = msgrcv(server_queue,&msg,MSG_SIZE,0,0);
-        if(result <0) FAILURE_EXIT("%s\n","Problem with main server loop");
+        int result = msgrcv(server_queue, &msg, MSG_SIZE, 0, 0);
+        if (result < 0) FAILURE_EXIT("%s\n", "Problem with main server loop");
 
-        switch(msg.type){
+        switch (msg.type) {
 
-            case HELLO:
-                WRITE_MSG("Server received: HELLO\n");
+            case HELLO: WRITE_MSG("Server received: HELLO\n");
                 addNewClient();
                 break;
-            case MIRROR:
-                WRITE_MSG("Server received: MIRROR\n");
+            case MIRROR: WRITE_MSG("Server received: MIRROR\n");
                 handleMirror();
                 break;
-            case CALC:
-                WRITE_MSG("Server received: CALC\n");
+            case CALC: WRITE_MSG("Server received: CALC\n");
                 handleCalc();
                 break;
-            case TIME:
-                WRITE_MSG("Server received: TIME\n");
+            case TIME: WRITE_MSG("Server received: TIME\n");
                 handleTime();
                 break;
-            case END:
-                WRITE_MSG("Server received: END\n");
-                end_task =1;
+            case END: WRITE_MSG("Server received: END\n");
+                end_task = 1;
                 break;
-            case STOP:
-                WRITE_MSG("Server received: STOP\n");
+            case STOP: WRITE_MSG("Server received: STOP\n");
                 removeClient();
 
         }
@@ -105,9 +104,9 @@ int main() {
 /////////////////////////////////////////////////////////////////////////////
 
 
-void removeClient(){
-    for(int i=0;i<MAXCLIENTS;i++){
-        if(client[i][0]== msg.pid){
+void removeClient() {
+    for (int i = 0; i < MAXCLIENTS; i++) {
+        if (client[i][0] == msg.pid) {
             client[i][0] = -1;
             client[i][1] = -1;
         }
@@ -115,25 +114,25 @@ void removeClient(){
 }
 
 
-void addNewClient(){
-    int client_queue=-1;
-    if(active_clients >= MAXCLIENTS){
+void addNewClient() {
+    int client_queue = -1;
+    if (active_clients >= MAXCLIENTS) {
         WRITE_MSG("Too many clients\n");
-        kill(msg.pid,SIGINT);
+        kill(msg.pid, SIGINT);
         return;
     }
 
-    for(int i=0;i<MAXCLIENTS;i++){
-        if(client[i][0]==-1){
-            key_t client_key = ftok( getenv("HOME"),msg.pid);
-            client_queue = msgget(client_key,0);
+    for (int i = 0; i < MAXCLIENTS; i++) {
+        if (client[i][0] == -1) {
+            key_t client_key = ftok(getenv("HOME"), msg.pid);
+            client_queue = msgget(client_key, 0);
 
             client[i][0] = msg.pid;
             client[i][1] = client_queue;
 
-            if(client_queue == -1){
-                WRITE_MSG("Couldn't open client's queue !%d!\n",client_queue);
-                kill(msg.pid,SIGINT);
+            if (client_queue == -1) {
+                WRITE_MSG("Couldn't open client's queue !%d!\n", client_queue);
+                kill(msg.pid, SIGINT);
                 return;
             }
 
@@ -143,88 +142,89 @@ void addNewClient(){
 
 
     char buf[40];
-    sprintf(buf,"%d",msg.pid);
-    strcpy(msg.text,buf);
-    msgsnd(client_queue,&msg,MSG_SIZE,0);
+    sprintf(buf, "%d", msg.pid);
+    strcpy(msg.text, buf);
+    msgsnd(client_queue, &msg, MSG_SIZE, 0);
 
 }
 
-void handleMirror(){
+void handleMirror() {
 
     int client_queue = getQueueID();
-    char buff[TEXT_SIZE]; int j=0;
-    for(int i=strlen(msg.text)-1;i>=0;i--){
+    char buff[TEXT_SIZE];
+    int j = 0;
+    for (int i = strlen(msg.text) - 1; i >= 0; i--) {
         buff[j++] = msg.text[i];
     }
 
-    strcpy(msg.text,buff);
-    msgsnd(client_queue,&msg,MSG_SIZE,0);
+    strcpy(msg.text, buff);
+    msgsnd(client_queue, &msg, MSG_SIZE, 0);
 }
 
-void handleCalc(){
+void handleCalc() {
     int client_queue = getQueueID();
     char *token;
-    token = strtok(msg.text," ");
+    token = strtok(msg.text, " ");
     char *type;
-    int first,second;
-    int loop=0;
-    while( token != NULL ) {
+    int first, second;
+    int loop = 0;
+    while (token != NULL) {
 
-        if(loop==0) type = token;
-        if(loop==1) first = atoi(token);
-        if(loop==2) second = atoi(token);
-        token = strtok(NULL," ");
+        if (loop == 0) type = token;
+        if (loop == 1) first = atoi(token);
+        if (loop == 2) second = atoi(token);
+        token = strtok(NULL, " ");
         loop++;
     }
-    printf("%d\n",loop);
-    if(loop!=3){
-        printf("%d\n",loop);
-        kill(msg.pid,SIGINT);
-        printf("%d\n",loop);
+    printf("%d\n", loop);
+    if (loop != 3) {
+        printf("%d\n", loop);
+        kill(msg.pid, SIGINT);
+        printf("%d\n", loop);
         return;
     }
 
     int result;
-    if(strcmp(type,"ADD")==0){
-        result = first+second;
-    }else if(strcmp(type,"SUB")==0){
+    if (strcmp(type, "ADD") == 0) {
+        result = first + second;
+    } else if (strcmp(type, "SUB") == 0) {
         result = first - second;
-    }else if(strcmp(type,"MUL")==0){
-        result = first *second;
-    }else if(strcmp(type,"DIV")==0){
-        if(second == 0){
-            kill(msg.pid,SIGINT);
+    } else if (strcmp(type, "MUL") == 0) {
+        result = first * second;
+    } else if (strcmp(type, "DIV") == 0) {
+        if (second == 0) {
+            kill(msg.pid, SIGINT);
             return;
         }
         result = first / second;
-    }else{
-        kill(msg.pid,SIGINT);
+    } else {
+        kill(msg.pid, SIGINT);
         return;
     }
     sprintf(msg.text, "%d", result);
-    msgsnd(client_queue,&msg,MSG_SIZE,0);
+    msgsnd(client_queue, &msg, MSG_SIZE, 0);
 
 }
 
-void handleTime(){
+void handleTime() {
     int client_queue = getQueueID();
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
 
     char buf[TEXT_SIZE];
-    sprintf(buf,"%d-%d-%d %d:%d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min);
-    strcpy(msg.text,buf);
-    msgsnd(client_queue,&msg,MSG_SIZE,0);
+    sprintf(buf, "%d-%d-%d %d:%d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min);
+    strcpy(msg.text, buf);
+    msgsnd(client_queue, &msg, MSG_SIZE, 0);
 }
 
-int getQueueID(){
-    int client_queue =-1;
-    for(int i=0;i<MAXCLIENTS;i++){
-        if(client[i][0]== msg.pid){
+int getQueueID() {
+    int client_queue = -1;
+    for (int i = 0; i < MAXCLIENTS; i++) {
+        if (client[i][0] == msg.pid) {
             client_queue = client[i][1];
             break;
         }
     }
-    if(client_queue==-1) printf("Getting client_queue failed\n");
+    if (client_queue == -1) printf("Getting client_queue failed\n");
     return client_queue;
 }
