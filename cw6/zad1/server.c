@@ -25,14 +25,12 @@ Message msg;
 int client[MAXCLIENTS];
 int active_clients = 0;
 
-
 void intHandler(int dummy);
 void addNewClient();
 void handleMirror();
 void handleCalc();
 void handleTime();
 void handleEND();
-
 
 
 int main() {
@@ -61,7 +59,8 @@ int main() {
         switch(msg.type){
 
             case HELLO:
-                WRITE_MSG("Server received: HELLO\n");
+
+                WRITE_MSG("Server received: HELLO from !%s!\n",msg.client_queue);
                 addNewClient();
                 break;
             case MIRROR:
@@ -98,7 +97,7 @@ void intHandler(int dummy) {
 
 void addNewClient(){
     int client_queue = msg.client_queue;
-    W("%d d\n",client_queue);
+
     if(active_clients >= MAXCLIENTS){
         WRITE_MSG("Too many clients\n");
         return;
@@ -110,13 +109,14 @@ void addNewClient(){
         }
     }
     int result = msgget(client_queue,0);
-    if(result == -1) WRITE_MSG("Couldn't open client's queue\n");
+    if(result == -1) WRITE_MSG("Couldn't open client's queue !%d!\n",client_queue);
     msg.client_queue = client_queue;
     msgsnd(client_queue,&msg,MSG_SIZE,0);
 
 }
 
 void handleMirror(){
+    WRITE_MSG("Server received: MIRROR:!%s!\n",msg.text);
     int j=0;
     char buff[TEXT_SIZE];
     for(int i=strlen(msg.text);i>=0;i--){
@@ -124,7 +124,7 @@ void handleMirror(){
     }
 
     strcpy(msg.text,buff);
-    printf("%s",buff);
+    printf("!%s!\n",buff);
     msgsnd(msg.client_queue,&msg,MSG_SIZE,0);
 }
 
