@@ -22,19 +22,21 @@ int end_task =0;
 //sudo ipcrm --all=msg
 int server_queue;
 Message msg;
-int client[MAXCLIENTS];
+int client[MAXCLIENTS][2];
 int active_clients = 0;
 
-void intHandler(int dummy);
+void intHandler();
 void addNewClient();
 void handleMirror();
 void handleCalc();
 void handleTime();
 void handleEND();
+int getQueueID();
+
 
 
 int main() {
-    atexit(intHandler);
+    if(atexit(intHandler)==-1)FAILURE_EXIT("Registering client's atexit failed!\n");
     signal(SIGINT, intHandler);
 
     key_t public_key = ftok(getenv("HOME"), PROJECT_ID);
@@ -42,8 +44,11 @@ int main() {
     if (server_queue == -1) FAILURE_EXIT("server_queue wasn't created: %s\n", strerror(errno));
 
     for(int i=0;i<MAXCLIENTS;i++){
-        client[i]=-1;
+        client[i][0]=-1;
+        client[i][1]=-1;
     }
+
+
 
 
     while(1){
@@ -59,16 +64,15 @@ int main() {
         switch(msg.type){
 
             case HELLO:
-
-                WRITE_MSG("Server received: HELLO from !%s!\n",msg.client_queue);
+                WRITE_MSG("Server received: HELLO\n");
                 addNewClient();
                 break;
             case MIRROR:
-                WRITE_MSG("Server received: MIRROR:!%s!\n",msg.text);
+                WRITE_MSG("Server received: MIRROR\n");
                 handleMirror();
                 break;
             case CALC:
-                WRITE_MSG("Server received CALC:!%s!\n",msg.text);
+                WRITE_MSG("Server received CALC\n");
                 handleCalc();
                 break;
             case TIME:
@@ -89,46 +93,54 @@ int main() {
 
 /////////////////////////////////////////////////////////////////////////////
 
-void intHandler(int dummy) {
+
+void intHandler() {
     WRITE_MSG("Server is closed\n");
     if(msgctl(server_queue,IPC_RMID,NULL)== -1) FAILURE_EXIT("Couldn't delete server queue from handler: %s\n",strerror(errno) );
     exit(0);
 }
 
 void addNewClient(){
-    int client_queue = msg.client_queue;
-
+    int client_queue=-1;
     if(active_clients >= MAXCLIENTS){
         WRITE_MSG("Too many clients\n");
+        kill(SIGINT,msg.pid);
         return;
     }
-    for(int i=0;i<MAXCLIENTS;i++) {
-        if (client[i] != -1) {
-            client[i] = client_queue;
-            break;
+
+    for(int i=0;i<MAXCLIENTS;i++){
+        if(client[i][0]==-1){
+            client[i][0] == msg.pid;
+            key_t client_key = ftok( getenv("HOME"),msg.pid);
+            client_queue = msgget(client_key,0);
+            if(client_queue == -1){
+                WRITE_MSG("Couldn't open client's queue !%d!\n",client_queue);
+                kill(SIGINT,msg.pid);
+                return;
+            }
+            client[i][1] = client_queue;
         }
     }
-    int result = msgget(client_queue,0);
-    if(result == -1) WRITE_MSG("Couldn't open client's queue !%d!\n",client_queue);
-    msg.client_queue = client_queue;
+
+    strcpy(msg.text,"ok. Server opened client's queue\n");
     msgsnd(client_queue,&msg,MSG_SIZE,0);
 
 }
 
 void handleMirror(){
-    WRITE_MSG("Server received: MIRROR:!%s!\n",msg.text);
-    int j=0;
-    char buff[TEXT_SIZE];
+    int client_queue = getQueueID();
+    pritnf("---->%s",msg.text);
+    char buff[TEXT_SIZE]; int j=0;
     for(int i=strlen(msg.text);i>=0;i--){
         buff[j++] = msg.text[i];
     }
-
-    strcpy(msg.text,buff);
     printf("!%s!\n",buff);
-    msgsnd(msg.client_queue,&msg,MSG_SIZE,0);
+    strcpy(msg.text,buff);
+    msgsnd(client_queue,&msg,MSG_SIZE,0);
 }
 
 void handleCalc(){
+    int client_queue = getQueueID();
     char *token;
     token = strtok(msg.text," ");
     char *type;
@@ -140,8 +152,7 @@ void handleCalc(){
         if(loop==1) first = atoi(token);
         if(loop==2) second = atoi(token);
         if(loop==3){
-            strcpy(msg.text,"Incorrect calc data1\n");
-            msgsnd(msg.client_queue,&msg,MSG_SIZE,0);
+            kill(SIGINT,msg.pid);
             return;
         }
         token = strtok(NULL," ");
@@ -157,31 +168,38 @@ void handleCalc(){
         result = first *second;
     }else if(strcmp(type,"DIV")==0){
         if(second == 0){
-            strcpy(msg.text,"Incorrect calc data\n");
-            msgsnd(msg.client_queue,&msg,MSG_SIZE,0);
+            kill(SIGINT,msg.pid);
             return;
         }
         result = first / second;
     }else{
-        strcpy(msg.text,"Incorrect calc data3\n");
-        msgsnd(msg.client_queue,&msg,MSG_SIZE,0);
+        kill(SIGINT,msg.pid);
         return;
     }
     sprintf(msg.text, "%d", result);
-    msgsnd(msg.client_queue,&msg,MSG_SIZE,0);
+    msgsnd(client_queue,&msg,MSG_SIZE,0);
 
 }
 
 void handleTime(){
+    int client_queue = getQueueID();
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
-    strcpy(msg.text,("%d-%d-%d %d:%d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min));
-    msgsnd(msg.client_queue,&msg,MSG_SIZE,0);
+
+    char buf[TEXT_SIZE];
+    sprintf(buf,"%d-%d-%d %d:%d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min);
+    strcpy(msg.text,buf);
+    msgsnd(client_queue,&msg,MSG_SIZE,0);
 }
 
-void handleEND(){
-    while(1){
-
+int getQueueID(){
+    int client_queue =-1;
+    for(int i=0;i<MAXCLIENTS;i++){
+        if(client[i][0]==msg.pid){
+            client_queue = client[i][1];
+            break;
+        }
     }
-    exit(0);
+    return client_queue;
+
 }

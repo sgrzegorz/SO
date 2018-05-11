@@ -8,7 +8,7 @@
 typedef struct {
     long   type;       /* Message type. */
     char   text[TEXT_SIZE];    /* Message text. */
-    int client_queue;
+    pid_t pid;
 }Message;
 
 typedef enum {MIRROR=1, CALC=2, TIME=3,END=4,HELLO=5 }Type;

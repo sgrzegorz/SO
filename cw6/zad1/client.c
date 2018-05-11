@@ -16,7 +16,7 @@ volatile int server_queue;
 volatile int client_queue;
 Message  msg;
 
-void intHandler(int dummy) {
+void intHandler() {
     WRITE_MSG("Client is closed\n");
     if(msgctl(client_queue,IPC_RMID,NULL)== -1) FAILURE_EXIT("Couldn't delete client queue from handler: %s\n",strerror(errno) );
     exit(0);
@@ -30,17 +30,16 @@ int main() {
     atexit(intHandler);
     signal(SIGINT, intHandler);
 
-    client_queue = msgget(IPC_PRIVATE, IPC_CREAT | IPC_EXCL|0666);
+    key_t client_key = ftok( getenv("HOME"),getpid());
+    client_queue = msgget(client_key, IPC_CREAT | IPC_EXCL|0666);
     if(client_queue == -1) FAILURE_EXIT("%s\n","client_queue wasn't created");
 
-
-    key_t public_key = ftok( getenv("HOME"),PROJECT_ID);
-    server_queue = msgget(public_key, 0);
+    key_t server_key = ftok( getenv("HOME"),PROJECT_ID);
+    server_queue = msgget(server_key, 0);
     if (server_queue == -1) FAILURE_EXIT("server_queue wasn't opened by client.\n");
 
     msg.type= HELLO;
-    msg.client_queue = client_queue;
-    strcpy(msg.text,"");
+    msg.pid = getpid();
     msgsnd(server_queue,&msg,MSG_SIZE,0);
     msgrcv(client_queue,&msg,MSG_SIZE,0,0);
 
