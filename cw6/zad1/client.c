@@ -42,47 +42,49 @@ int main() {
     msg.client_queue = client_queue;
     strcpy(msg.text,"");
     msgsnd(server_queue,&msg,MSG_SIZE,0);
-
     msgrcv(client_queue,&msg,MSG_SIZE,0,0);
 
-    char cmd[20];
+
     while(1){
+
         printf("Enter your command: ");
-        if(fgets(cmd,20,stdin) == NULL) FAILURE_EXIT("No input\n");
-        cmd[strlen(cmd)-1] ='\0'; //remove new line
+        char cmd[100];
+        if (fgets(cmd, 100, stdin) == NULL) FAILURE_EXIT("No input\n");
+        cmd[strlen(cmd) - 1] = '\0'; //remove new line
 
-        char *token,*type,*arguments;
-        token = strtok(msg.text," ");
-        int loop=0;
-        while( token != NULL ) {
-            printf("%s,%s\n",type,arguments);
-            if (loop == 0) type = token;
-            if (loop == 1) arguments = token;
-            token = strtok(NULL, " ");
-            loop++;
-        }
+        char *type, *remainder,*token;
+        type = strtok_r (cmd, " ", &token);
+        remainder = token;
 
-        printf("!%s@\n",cmd);
+        printf("!%s@%s!\n",cmd,remainder);
         if(strcmp(type,"MIRROR")==0){
             msg.type=MIRROR;
-            strcpy(msg.text,arguments);
+            strcpy(msg.text,remainder);
             msgsnd(server_queue,&msg,MSG_SIZE,0);
             msgrcv(client_queue,&msg,MSG_SIZE,0,0);
             WRITE_MSG("%s",msg.text);
 
         }else if(strcmp(type,"CALC")==0){
             msg.type=CALC;
-            strcpy(msg.text,arguments);
+            strcpy(msg.text,remainder);
             msgsnd(server_queue,&msg,MSG_SIZE,0);
             msgrcv(client_queue,&msg,MSG_SIZE,0,0);
             WRITE_MSG("%s",msg.text);
 
         }else if(strcmp(type,"TIME")==0){
+            if(strlen(remainder)!=0){
+                printf("Incorrect argument\n");
+                continue;
+            }
             msg.type=TIME;
             msgsnd(server_queue,&msg,MSG_SIZE,0);
             msgrcv(client_queue,&msg,MSG_SIZE,0,0);
             WRITE_MSG("%s",msg.text);
         }else if(strcmp(type,"END")==0) {
+            if(strlen(remainder)!=0){
+                printf("Incorrect argument\n");
+                continue;
+            }
             msg.type=END;
             msgsnd(server_queue,&msg,MSG_SIZE,0);
             exit(0);
