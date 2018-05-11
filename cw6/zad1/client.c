@@ -55,7 +55,7 @@ int main() {
         type = strtok_r (cmd, " ", &token);
         remainder = token;
 
-        printf("!%s@%s!\n",cmd,remainder);
+
         if(strcmp(type,"MIRROR")==0){
             msg.type=MIRROR;
             strcpy(msg.text,remainder);
@@ -68,7 +68,7 @@ int main() {
             strcpy(msg.text,remainder);
             msgsnd(server_queue,&msg,MSG_SIZE,0);
             msgrcv(client_queue,&msg,MSG_SIZE,0,0);
-            WRITE_MSG("%s",msg.text);
+            WRITE_MSG("%s\n",msg.text);
 
         }else if(strcmp(type,"TIME")==0){
             if(strlen(remainder)!=0){

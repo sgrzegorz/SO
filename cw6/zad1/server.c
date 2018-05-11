@@ -108,7 +108,7 @@ void addNewClient(){
     int client_queue=-1;
     if(active_clients >= MAXCLIENTS){
         WRITE_MSG("Too many clients\n");
-        kill(SIGINT,msg.pid);
+        kill(msg.pid,SIGINT);
         return;
     }
 
@@ -117,12 +117,12 @@ void addNewClient(){
             key_t client_key = ftok( getenv("HOME"),msg.pid);
             client_queue = msgget(client_key,0);
 
-            client[i][0] == msg.pid;
+            client[i][0] = msg.pid;
             client[i][1] = client_queue;
-            printf("%d\n",client[i][0]);
+
             if(client_queue == -1){
                 WRITE_MSG("Couldn't open client's queue !%d!\n",client_queue);
-                kill(SIGINT,msg.pid);
+                kill(msg.pid,SIGINT);
                 return;
             }
 
@@ -139,14 +139,13 @@ void addNewClient(){
 }
 
 void handleMirror(){
-//    pritnf("---->%s\n",msg.text);
+
     int client_queue = getQueueID();
-    printf("<%d>\n",client_queue);
     char buff[TEXT_SIZE]; int j=0;
-    for(int i=strlen(msg.text);i>=0;i--){
+    for(int i=strlen(msg.text)-1;i>=0;i--){
         buff[j++] = msg.text[i];
     }
-    printf("!%s!\n",buff);
+
     strcpy(msg.text,buff);
     msgsnd(client_queue,&msg,MSG_SIZE,0);
 }
@@ -163,12 +162,15 @@ void handleCalc(){
         if(loop==0) type = token;
         if(loop==1) first = atoi(token);
         if(loop==2) second = atoi(token);
-        if(loop==3){
-            kill(SIGINT,msg.pid);
-            return;
-        }
         token = strtok(NULL," ");
         loop++;
+    }
+    printf("%d\n",loop);
+    if(loop!=3){
+        printf("%d\n",loop);
+        kill(msg.pid,SIGINT);
+        printf("%d\n",loop);
+        return;
     }
 
     int result;
@@ -180,12 +182,12 @@ void handleCalc(){
         result = first *second;
     }else if(strcmp(type,"DIV")==0){
         if(second == 0){
-            kill(SIGINT,msg.pid);
+            kill(msg.pid,SIGINT);
             return;
         }
         result = first / second;
     }else{
-        kill(SIGINT,msg.pid);
+        kill(msg.pid,SIGINT);
         return;
     }
     sprintf(msg.text, "%d", result);
@@ -207,7 +209,6 @@ void handleTime(){
 int getQueueID(){
     int client_queue =-1;
     for(int i=0;i<MAXCLIENTS;i++){
-        printf("%d,%d\n",client[i][0],msg.pid);
         if(client[i][0]== msg.pid){
             client_queue = client[i][1];
             break;
