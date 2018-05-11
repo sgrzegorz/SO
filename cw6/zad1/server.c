@@ -128,8 +128,9 @@ void addNewClient(){
 }
 
 void handleMirror(){
+    pritnf("---->%s\n",msg.text);
     int client_queue = getQueueID();
-    pritnf("---->%s",msg.text);
+
     char buff[TEXT_SIZE]; int j=0;
     for(int i=strlen(msg.text);i>=0;i--){
         buff[j++] = msg.text[i];
