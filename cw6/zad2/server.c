@@ -156,6 +156,7 @@ void handleMirror() {
     for (int i = strlen(msg.text) - 1; i >= 0; i--) {
         buff[j++] = msg.text[i];
     }
+    buff[j]=0;
 
     strcpy(msg.text, buff);
     msgsnd(client_queue, &msg, MSG_SIZE, 0);
