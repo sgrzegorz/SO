@@ -58,7 +58,6 @@ int main() {
     
 
     while (1) {
-        memset(msg.text,0,sizeof(msg.text));
         printf("Enter your command: ");
         char cmd[100];
         if (fgets(cmd, 100, stdin) == NULL) FAILURE_EXIT("No input\n");

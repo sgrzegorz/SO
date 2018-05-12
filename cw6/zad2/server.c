@@ -77,7 +77,7 @@ int main() {
 
 
     while (1) {
-        memset(msg.text,0,sizeof(msg.text));
+
         if (end_task) {
             struct mq_attr attr;
             mq_getattr(server_queue, &attr);
@@ -172,6 +172,7 @@ void handleMirror() {
     for (int i = strlen(msg.text) - 1; i >= 0; i--) {
         buff[j++] = msg.text[i];
     }
+    buff[j]=0;
 
     strcpy(msg.text, buff);
     mq_send(client_queue,(char*) &msg, sizeof(Message),0);
