@@ -42,9 +42,15 @@ int getQueueID();
 void removeClient();
 
 void atexitFunction() {
+    for(int i=0;i<MAXCLIENTS;i++){
+        if(client[i][0]!=-1){
+            mq_close(client[i][1]);
+        }
+    }
+
     WRITE_MSG("Server is being closed\n");
     mq_close(server_queue);
-    if (mq_unlink("/server"); == -1) FAILURE_EXIT("Couldn't delete server queue from handler: %s\n",
+    if (mq_unlink("/server") == -1) FAILURE_EXIT("Couldn't delete server queue from handler: %s\n",
                                                                  strerror(errno));
 }
 
@@ -115,6 +121,7 @@ int main() {
 void removeClient() {
     for (int i = 0; i < MAXCLIENTS; i++) {
         if (client[i][0] == msg.pid) {
+            mq_close(client[i][1]);
             client[i][0] = -1;
             client[i][1] = -1;
         }

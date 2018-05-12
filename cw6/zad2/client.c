@@ -27,6 +27,9 @@ void atexitFunction() {
     mq_close(server_queue);
     mq_close(client_queue);
     mq_send(server_queue,(char*) &msg, sizeof(Message),0);
+    char buf[40];
+    sprintf(buf,"/%d",getpid());
+    mq_unlink(buf);
     WRITE_MSG("Client is being closed\n");
 }
 
@@ -64,13 +67,13 @@ int main() {
         type = strtok_r(cmd, " ", &token);
         remainder = token;
 
-
+        memset(msg.text,0,sizeof(msg.text));
         if (strcmp(type, "MIRROR") == 0) {
             msg.type = MIRROR;
             strcpy(msg.text, remainder);
             mq_send(server_queue,(char*) &msg, sizeof(Message),0);
             mq_receive(client_queue, (char*) &msg, sizeof(Message),0);
-            WRITE_MSG("%s", msg.text);
+            WRITE_MSG("%s\n", msg.text);
 
         } else if (strcmp(type, "CALC") == 0) {
             msg.type = CALC;
