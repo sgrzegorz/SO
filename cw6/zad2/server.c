@@ -45,6 +45,7 @@ void atexitFunction() {
     for(int i=0;i<MAXCLIENTS;i++){
         if(client[i][0]!=-1){
             mq_close(client[i][1]);
+            kill(client[i][0],SIGINT);
         }
     }
 
@@ -195,9 +196,7 @@ void handleCalc() {
     }
     printf("%d\n", loop);
     if (loop != 3) {
-        printf("%d\n", loop);
         kill(msg.pid, SIGINT);
-        printf("%d\n", loop);
         return;
     }
 
