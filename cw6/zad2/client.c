@@ -55,9 +55,10 @@ int main() {
     mq_send(server_queue,(char*) &msg, sizeof(Message),0);
     mq_receive(client_queue, (char*) &msg, sizeof(Message),0);
     printf("Client connected to server: %s\n", msg.text);
+    
 
     while (1) {
-
+        memset(msg.text,0,sizeof(msg.text));
         printf("Enter your command: ");
         char cmd[100];
         if (fgets(cmd, 100, stdin) == NULL) FAILURE_EXIT("No input\n");
@@ -67,7 +68,7 @@ int main() {
         type = strtok_r(cmd, " ", &token);
         remainder = token;
 
-        memset(msg.text,0,sizeof(msg.text));
+
         if (strcmp(type, "MIRROR") == 0) {
             msg.type = MIRROR;
             strcpy(msg.text, remainder);

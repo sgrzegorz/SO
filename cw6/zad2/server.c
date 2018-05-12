@@ -77,6 +77,7 @@ int main() {
 
 
     while (1) {
+        memset(msg.text,0,sizeof(msg.text));
         if (end_task) {
             struct mq_attr attr;
             mq_getattr(server_queue, &attr);
