@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/x/Documents/SrokaGrzegorz/cw6/zad2/client.c
+stdio.h
+-
+stdlib.h
+-
+sys/ipc.h
+-
+sys/msg.h
+-
+errno.h
+-
+memory.h
+-
+signal.h
+-
+zconf.h
+-
+settings.h
+/home/x/Documents/SrokaGrzegorz/cw6/zad2/settings.h
+mqueue.h
+-
+
+/home/x/Documents/SrokaGrzegorz/cw6/zad2/settings.h
+

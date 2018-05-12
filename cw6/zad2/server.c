@@ -14,13 +14,15 @@
 #include <stdlib.h>
 #include <zconf.h>
 #include <time.h>
+#include <mqueue.h>
+
 
 int end_task = 0;
 #define WRITE_MSG(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 #define FAILURE_EXIT(format, ...) { fprintf(stderr, format, ##__VA_ARGS__); exit(-1); }
 #define W(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 //sudo ipcrm --all=msg
-int server_queue;
+mqd_t server_queue;
 Message msg;
 int client[MAXCLIENTS][2];
 int active_clients = 0;
@@ -41,7 +43,8 @@ void removeClient();
 
 void atexitFunction() {
     WRITE_MSG("Server is being closed\n");
-    if (msgctl(server_queue, IPC_RMID, NULL) == -1) FAILURE_EXIT("Couldn't delete server queue from handler: %s\n",
+    mq_close(server_queue);
+    if (mq_unlink("/server"); == -1) FAILURE_EXIT("Couldn't delete server queue from handler: %s\n",
                                                                  strerror(errno));
 }
 
@@ -54,9 +57,12 @@ int main() {
     if (atexit(atexitFunction) == -1) FAILURE_EXIT("Registering client's atexit failed!\n");
     signal(SIGINT, intHandler);
 
-    key_t public_key = ftok(getenv("HOME"), PROJECT_ID);
-    server_queue = msgget(public_key, IPC_CREAT | IPC_EXCL | 0777);
+    struct mq_attr attr;
+    attr.mq_maxmsg = 10;
+    attr.mq_msgsize = sizeof(Message);
+    mqd_t server_queue = mq_open("/server", O_RDONLY|O_CREAT,0666,&attr);
     if (server_queue == -1) FAILURE_EXIT("server_queue wasn't created: %s\n", strerror(errno));
+    
 
     for (int i = 0; i < MAXCLIENTS; i++) {
         client[i][0] = -1;
@@ -66,12 +72,14 @@ int main() {
 
     while (1) {
         if (end_task) {
-            struct msqid_ds buf;
-            msgctl(public_key, IPC_STAT, &buf);
-            if (buf.msg_qnum == 0) break;
+            struct mq_attr attr;
+            mq_getattr(server_queue, &attr);
+            if(attr.mq_curmsgs == 0) break;
+
         }
         WRITE_MSG("Server waits for message:\n");
-        int result = msgrcv(server_queue, &msg, MSG_SIZE, 0, 0);
+
+        int result = mq_receive(server_queue, (char*) &msg, sizeof(Message),0);
         if (result < 0) FAILURE_EXIT("%s\n", "Problem with main server loop");
 
         switch (msg.type) {
@@ -115,7 +123,7 @@ void removeClient() {
 
 
 void addNewClient() {
-    int client_queue = -1;
+    mqd_t client_queue = -1;
     if (active_clients >= MAXCLIENTS) {
         WRITE_MSG("Too many clients\n");
         kill(msg.pid, SIGINT);
@@ -124,9 +132,9 @@ void addNewClient() {
 
     for (int i = 0; i < MAXCLIENTS; i++) {
         if (client[i][0] == -1) {
-            key_t client_key = ftok(getenv("HOME"), msg.pid);
-            client_queue = msgget(client_key, 0);
-
+            char buf[50];
+            sprintf(buf,"/%d",msg.pid);
+            client_queue = mq_open(buf,O_WRONLY);
             client[i][0] = msg.pid;
             client[i][1] = client_queue;
 
@@ -144,7 +152,7 @@ void addNewClient() {
     char buf[40];
     sprintf(buf, "%d", msg.pid);
     strcpy(msg.text, buf);
-    msgsnd(client_queue, &msg, MSG_SIZE, 0);
+    mq_send(client_queue,(char*) &msg, sizeof(Message),0);
 
 }
 
@@ -158,7 +166,7 @@ void handleMirror() {
     }
 
     strcpy(msg.text, buff);
-    msgsnd(client_queue, &msg, MSG_SIZE, 0);
+    mq_send(client_queue,(char*) &msg, sizeof(Message),0);
 }
 
 void handleCalc() {
@@ -202,7 +210,7 @@ void handleCalc() {
         return;
     }
     sprintf(msg.text, "%d", result);
-    msgsnd(client_queue, &msg, MSG_SIZE, 0);
+    mq_send(client_queue,(char*) &msg, sizeof(Message),0);
 
 }
 
@@ -214,7 +222,7 @@ void handleTime() {
     char buf[TEXT_SIZE];
     sprintf(buf, "%d-%d-%d %d:%d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min);
     strcpy(msg.text, buf);
-    msgsnd(client_queue, &msg, MSG_SIZE, 0);
+    mq_send(client_queue,(char*) &msg, sizeof(Message),0);
 }
 
 int getQueueID() {
@@ -228,3 +236,24 @@ int getQueueID() {
     if (client_queue == -1) printf("Getting client_queue failed\n");
     return client_queue;
 }
+
+
+
+// int main() {
+//     struct mq_attr attr;
+//     attr.mq_maxmsg = 10;
+//     attr.mq_msgsize = sizeof(Message);
+
+//     mqd_t queue = mq_open("/server", O_RDONLY|O_CREAT,0666,&attr);
+//     printf("%s\n",strerror(errno));
+//     char buf[40];
+//     int result = mq_receive(queue, (char*) &msg, sizeof(Message),0);
+//     printf("%s\n",strerror(errno));
+//     printf("!%s!,\n",msg.text);
+//     //mq_close(queue);
+//     mq_unlink("/server");
+
+// }
+
+/////////////////////////////////////////////////////////////////////////////
+

@@ -14,7 +14,6 @@ typedef struct {
 typedef enum {
     MIRROR = 1, CALC = 2, TIME = 3, END = 4, HELLO = 5, STOP = 6
 } Type;
-const size_t MSG_SIZE = sizeof(Message) - sizeof(long);
 
 
 #endif //ZAD1_SETTINGS_H
