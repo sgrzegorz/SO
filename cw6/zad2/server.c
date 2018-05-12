@@ -67,7 +67,7 @@ int main() {
     struct mq_attr attr;
     attr.mq_maxmsg = 10;
     attr.mq_msgsize = sizeof(Message);
-    mqd_t server_queue = mq_open("/server", O_RDONLY|O_CREAT,0666,&attr);
+    mqd_t server_queue = mq_open("/server", O_RDONLY|O_CREAT|O_EXCL,0666,&attr);
     if (server_queue == -1) FAILURE_EXIT("server_queue wasn't created: %s\n", strerror(errno));
     
 

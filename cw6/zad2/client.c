@@ -43,7 +43,7 @@ int main() {
     attr.mq_msgsize = sizeof(Message);
     char client_name[40];
     sprintf(client_name,"/%d",getpid());
-    client_queue = mq_open(client_name, O_RDONLY|O_CREAT,0666,&attr);
+    client_queue = mq_open(client_name, O_RDONLY|O_CREAT|O_EXCL,0666,&attr);
     if (client_queue == -1) FAILURE_EXIT("%s\n", "client_queue wasn't created");
 
 
