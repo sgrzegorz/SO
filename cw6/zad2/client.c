@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <errno.h>
 #include <memory.h>
 #include <signal.h>
-#include <zconf.h>
 #include "settings.h"
 #include <mqueue.h>
 
@@ -24,9 +22,9 @@ void intHandler() {
 
 void atexitFunction() {
     msg.type = STOP;
+    mq_send(server_queue,(char*) &msg, sizeof(Message),0);
     mq_close(server_queue);
     mq_close(client_queue);
-    mq_send(server_queue,(char*) &msg, sizeof(Message),0);
     char buf[40];
     sprintf(buf,"/%d",getpid());
     mq_unlink(buf);
@@ -62,7 +60,10 @@ int main() {
         char cmd[100];
         if (fgets(cmd, 100, stdin) == NULL) FAILURE_EXIT("No input\n");
         cmd[strlen(cmd) - 1] = '\0'; //remove new line
-
+        if(cmd[0]==0){
+            printf("Incorrect input\n");
+            continue;
+        }
         char *type, *remainder, *token;
         type = strtok_r(cmd, " ", &token);
         remainder = token;
