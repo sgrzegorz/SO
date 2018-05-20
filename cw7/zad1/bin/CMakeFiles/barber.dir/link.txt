@@ -1,0 +1,1 @@
+/usr/bin/cc   -rdynamic CMakeFiles/barber.dir/barber.c.o CMakeFiles/barber.dir/shared_memory.c.o  -o barber 

@@ -1,4 +1,4 @@
-/home/x/Documents/SrokaGrzegorz/cw6/zad2/bin/CMakeFiles/edit_cache.dir
-/home/x/Documents/SrokaGrzegorz/cw6/zad2/bin/CMakeFiles/client.dir
-/home/x/Documents/SrokaGrzegorz/cw6/zad2/bin/CMakeFiles/rebuild_cache.dir
-/home/x/Documents/SrokaGrzegorz/cw6/zad2/bin/CMakeFiles/server.dir
+/home/student/Documents/SrokaGrzegorz/cw6/zad2/bin/CMakeFiles/rebuild_cache.dir
+/home/student/Documents/SrokaGrzegorz/cw6/zad2/bin/CMakeFiles/edit_cache.dir
+/home/student/Documents/SrokaGrzegorz/cw6/zad2/bin/CMakeFiles/server.dir
+/home/student/Documents/SrokaGrzegorz/cw6/zad2/bin/CMakeFiles/client.dir

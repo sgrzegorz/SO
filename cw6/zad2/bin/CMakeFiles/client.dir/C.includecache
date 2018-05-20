@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/x/Documents/SrokaGrzegorz/cw6/zad2/client.c
+/home/student/Documents/SrokaGrzegorz/cw6/zad2/client.c
 stdio.h
 -
 stdlib.h
@@ -21,12 +21,10 @@ memory.h
 -
 signal.h
 -
-zconf.h
--
 settings.h
-/home/x/Documents/SrokaGrzegorz/cw6/zad2/settings.h
+/home/student/Documents/SrokaGrzegorz/cw6/zad2/settings.h
 mqueue.h
 -
 
-/home/x/Documents/SrokaGrzegorz/cw6/zad2/settings.h
+/home/student/Documents/SrokaGrzegorz/cw6/zad2/settings.h
 

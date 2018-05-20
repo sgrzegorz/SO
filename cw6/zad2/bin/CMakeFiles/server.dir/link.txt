@@ -1,1 +1,1 @@
-/usr/bin/cc   -rdynamic CMakeFiles/server.dir/server.c.o  -o server -lrt 
+/usr/bin/cc  -lrt  -rdynamic CMakeFiles/server.dir/server.c.o  -o server 

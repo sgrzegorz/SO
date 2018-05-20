@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/x/Documents/SrokaGrzegorz/cw6/zad2/server.c
+/home/student/Documents/SrokaGrzegorz/cw6/zad2/server.c
 stdio.h
 -
 stdlib.h
@@ -18,7 +18,7 @@ sys/ipc.h
 sys/msg.h
 -
 settings.h
-/home/x/Documents/SrokaGrzegorz/cw6/zad2/settings.h
+/home/student/Documents/SrokaGrzegorz/cw6/zad2/settings.h
 errno.h
 -
 memory.h
@@ -35,12 +35,10 @@ stdio.h
 -
 stdlib.h
 -
-zconf.h
--
 time.h
 -
 mqueue.h
 -
 
-/home/x/Documents/SrokaGrzegorz/cw6/zad2/settings.h
+/home/student/Documents/SrokaGrzegorz/cw6/zad2/settings.h
 
