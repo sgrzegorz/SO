@@ -1,4 +1,0 @@
-/home/student/Documents/SrokaGrzegorz/cw7/zad1/bin/CMakeFiles/rebuild_cache.dir
-/home/student/Documents/SrokaGrzegorz/cw7/zad1/bin/CMakeFiles/edit_cache.dir
-/home/student/Documents/SrokaGrzegorz/cw7/zad1/bin/CMakeFiles/barber.dir
-/home/student/Documents/SrokaGrzegorz/cw7/zad1/bin/CMakeFiles/creator.dir
