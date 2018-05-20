@@ -19,6 +19,9 @@ void parseArgs(int argc, char *argv[]){
 	fifo_size = tmp;
 }
 
+void exitHandler(int signo){
+	exit(0);
+}
 
 
 int main(int argc, char*argv[]){
@@ -26,12 +29,13 @@ int main(int argc, char*argv[]){
 	WRITE_MSG("!3\n");
     prepareResources();
     if(atexit(releaseResources) != 0) FAILURE_EXIT("Failed to set atexit function\n");
-
+	signal(SIGINT,exitHandler);
     
-	W("1\n");
+	
     if(semctl(semid,SEND_OUT_MSG,SETVAL,1) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
 	if(semctl(semid,SEND_CHAIR_MSG,SETVAL,1) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
 	if(semctl(semid,AWAKE,SETVAL,1) == -1) FAILURE_EXIT("Failed to set semaphore3\n");
+
 	if(semctl(semid, BARBER_ROOM, SETVAL, 0) == -1) FAILURE_EXIT("Failed to set semaphore4\n");
 	if(semctl(semid,WAITING_ROOM,SETVAL,1) == -1) FAILURE_EXIT("Failed to set semaphore5\n");
 
@@ -42,22 +46,22 @@ int main(int argc, char*argv[]){
     	if(isEmpty(fifo)){//In waiting room are no clients
     		modifySemaphore(WAITING_ROOM,1);
     		modifySemaphore(BARBER_ROOM,1);
-    		printf("BARBER: I go to sleep\n");
-    		modifySemaphore(AWAKE,0);
+    		printf("%ld: BARBER: I go to sleep\n",getTime());
+    		modifySemaphore(AWAKE,-1);
     		printf("BARBER: I wake up\n");
  
     	}else{//There was a client in waiting room
     		modifySemaphore(WAITING_ROOM,1);
     		pid_t client = pop(fifo);
-    		printf("BARBER: I invite client: %i\n",client);
+    		printf("%ld: BARBER: I invite client: %i\n",getTime(),client);
     		modifySemaphore(BARBER_ROOM,1);
     		fifo->chair = getpid();
     		modifySemaphore(SEND_CHAIR_MSG,1);
     	}
     	
     	//Cut client's chair
-    	printf("BARBER: I cut: %i\n",fifo->chair);
-    	printf("BARBER: I finished cut: %i\n",fifo->chair);
+    	printf("%ld: BARBER: I cut: %i\n",getTime(),fifo->chair);
+    	printf("%ld: BARBER: I finished cut: %i\n",getTime(),fifo->chair);
     	modifySemaphore(SEND_OUT_MSG,1);
     	modifySemaphore(BARBER_ROOM,-1);	
 
@@ -94,6 +98,6 @@ void releaseResources(){
 	if(shmdt(fifo) == -1) printf("Cannot detach data from shared memory\n");
 	if(shmctl(shmid, IPC_RMID, 0)==-1) printf("Cannot delete data in shared memory\n");
 	if(semctl(semid,0,IPC_RMID) == -1) printf("Deleting semaphores failed %s\n",strerror(errno));
-
+	printf("Barber released resourcess\n");
 }
 

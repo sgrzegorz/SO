@@ -2,6 +2,8 @@
 #ifndef SHAREDMEMORY_H
 #define SHAREDMEMORY_H
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
@@ -23,7 +25,7 @@
 #include <sys/types.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-
+#include <time.h>
 
 
 #define FAILURE_EXIT(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));exit(-1);}
@@ -50,10 +52,11 @@ void init(Fifo * fifo);
 int isEmpty(Fifo * fifo);
 
 int isFull(Fifo * fifo);
-
+long getTime();
 
 struct sembuf sops;
 enum SemTypes{BARBER_ROOM =0, WAITING_ROOM=1, AWAKE =2,SEND_CHAIR_MSG=3,SEND_OUT_MSG=4};
 
 void modifySemaphore(int name, int val);
 #endif //SHAREDMEMORY_H
+

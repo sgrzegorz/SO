@@ -66,3 +66,11 @@ void modifySemaphore(int name, int val){
 		if(semop(semid,&sops,1) == -1) FAILURE_EXIT("Failed to lock %s\n",semname);
 	}
 }
+
+long getTime(){
+    struct timespec time;
+    
+    if(gettime(CLOCK_MONOTONIC,&time) == -1) FAILURE_EXIT("Getting time was unsuccessfull\n");
+    return (long) time.tv_nsec /1000;
+
+}
