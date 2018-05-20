@@ -21,10 +21,10 @@ int pop(Fifo * fifo){
 
 void init(Fifo * fifo){
 	fifo->size =-1;
- 	WRITE_MSG("OLA\n");
+ 	
     fifo->head = fifo->tail = fifo->nelements =0;
     
-    WRITE_MSG("OLA\n");
+   
 }
 
 int isEmpty(Fifo * fifo){
@@ -65,4 +65,16 @@ void modifySemaphore(int name, int val){
 	}else{
 		if(semop(semid,&sops,1) == -1) FAILURE_EXIT("Failed to lock %s\n",semname);
 	}
+}
+
+// long int getTime(Fifo *fifo){
+//     struct timespec time;
+//     if(clock_gettime(CLOCK_MONOTONIC,&time)== -1) FAILURE_EXIT("Getting time failed %s\n",strerror(errno));
+//     return (long int) (time.tv_sec *1000000 + time.tv_nsec/1000 - fifo->start_time ); 
+// }
+
+
+long int getTime(Fifo *fifo){
+    fifo->start_time++;
+    return fifo->start_time;
 }
