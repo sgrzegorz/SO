@@ -38,6 +38,8 @@ typedef struct{
     int head ,tail ,size , nelements ;
     pid_t chair;
     long int start_time; 
+    int barber_in_bed;
+    pid_t barber_pid;
     
 }Fifo;
 
@@ -57,7 +59,7 @@ int isFull(Fifo * fifo);
 long getTime();
 
 struct sembuf sops;
-enum SemTypes{BARBER_ROOM =0, WAITING_ROOM=1, AWAKE =2,SEND_CHAIR_MSG=3,SEND_OUT_MSG=4};
+enum SemTypes{CLIENTS_BLOCADE =0, BED_QUEUE_BLOCADE=1};
 
 void modifySemaphore(int name, int val);
 #endif //SHAREDMEMORY_H

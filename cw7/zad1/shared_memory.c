@@ -49,14 +49,11 @@ void modifySemaphore(int name, int val){
     
     char *semname;
     switch(name){
-    	case AWAKE:
-    		semname = "AWAKE";
+    	case CLIENTS_BLOCADE:
+    		semname = "CLIENTS_BLOCADE";
     		break;
-    	case BARBER_ROOM:
-    		semname = "BARBER_ROOM";
-    		break;
-    	case WAITING_ROOM:
-    		semname = "WAITING_ROOM";
+    	case BED_QUEUE_BLOCADE:
+    		semname = "BED_QUEUE_BLOCADE";
     		break;
     }
 	if(val >= 0){

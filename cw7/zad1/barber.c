@@ -30,43 +30,55 @@ int main(int argc, char*argv[]){
     prepareResources();
     if(atexit(releaseResources) != 0) FAILURE_EXIT("Failed to set atexit function\n");
 	signal(SIGINT,exitHandler);
-   signal(SIGTERM,exitHandler);
+  	 signal(SIGTERM,exitHandler);
 	
-    if(semctl(semid,SEND_OUT_MSG,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
-	if(semctl(semid,SEND_CHAIR_MSG,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
-	if(semctl(semid,AWAKE,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore3\n");
-
-	if(semctl(semid, BARBER_ROOM, SETVAL, 0) == -1) FAILURE_EXIT("Failed to set semaphore4 %s\n, ",strerror(errno));
-	if(semctl(semid,WAITING_ROOM,SETVAL,1) == -1) FAILURE_EXIT("Failed to set semaphore5\n");
-
+    if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
+	if(semctl(semid,CLIENTS_BLOCADE,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
 	
 	while(1){
-		modifySemaphore(WAITING_ROOM,-1);
+		
 		
     	if(isEmpty(fifo)){//In waiting room are no clients
-    		modifySemaphore(WAITING_ROOM,1);
-    		modifySemaphore(BARBER_ROOM,1);
 			
-
+			modifySemaphore(BED_QUEUE_BLOCADE,1);
+    		
+			fifo->barber_in_bed =0;
     		printf("%ld: BARBER: I go to sleep\n",getTime(fifo));
+			modifySemaphore(CLIENTS_BLOCADE,1);
+    		while(fifo->barber_in_bed!=0){
 
-    		modifySemaphore(AWAKE,-1);
+			}
+
     		printf("%ld: BARBER: I wake up\n",getTime(fifo));
+			kill(SIGRTMIN,fifo->chair);
+			sigset_t mask;
+			sigemptyset(&mask);
+			sigsuspend(&mask);
+
+			printf("%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
+    		printf("%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
+			kill(SIGRTMIN,fifo->chair);
+
  
     	}else{//There was a client in waiting room
-    		modifySemaphore(WAITING_ROOM,1);
+    		
     		pid_t client = pop(fifo);
     		printf("%ld: BARBER: I invite client: %i\n",getTime(fifo),client);
-    		modifySemaphore(BARBER_ROOM,1);
     		fifo->chair = getpid();
-    		modifySemaphore(SEND_CHAIR_MSG,1);
+			modifySemaphore(BED_QUEUE_BLOCADE,1);
+			modifySemaphore(CLIENTS_BLOCADE,1);
+			kill(SIGRTMIN,fifo->chair);
+			sigset_t mask;
+			sigemptyset(&mask);
+			sigsuspend(&mask);
+				
+			printf("%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
+    		printf("%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
+			kill(SIGRTMIN,fifo->chair);
+
     	}
     	
-    	//Cut client's chair
-    	printf("%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
-    	printf("%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
-    	modifySemaphore(SEND_OUT_MSG,1);
-    	modifySemaphore(BARBER_ROOM,-1);	
+    	modifySemaphore(BED_QUEUE_BLOCADE,-1);	
 
     }
 
@@ -90,10 +102,10 @@ void prepareResources(){
 	fifo->start_time=0;
 	fifo->start_time = getTime(fifo);
     fifo->size = fifo_size;
-    
+    fifo->barber_pid = getpid();
    
   
-    semid = semget(key,5,IPC_CREAT|0666);
+    semid = semget(key,2,IPC_CREAT|0666);
 	   
     if(semid == -1) FAILURE_EXIT("Error while creating semaphore %s\n",strerror(errno));
     
