@@ -96,8 +96,6 @@ void takeActionIfBarberWasSleeping(){
 
 
 
-
-
 void releaseResources(){
 	if(shmdt(fifo) == -1) FAILURE_EXIT("Cannot detach data from shared memory\n"); 
 	printf("Creator released resourcess\n");
