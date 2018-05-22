@@ -35,8 +35,11 @@ int main(int argc, char *argv[]) {
     	pid_t pid = fork();
     	if(pid == 0){
     		for(int i=0;i<number_of_cuts;i++){
+				WRITE_MSG("I love\n");
 				modifySemaphore(CLIENTS_BLOCADE,0);
+				WRITE_MSG("I love\n");
 				modifySemaphore(BED_QUEUE_BLOCADE,-1);
+				WRITE_MSG("I love\n");
 				if(fifo->barber_in_bed){
 					takeActionIfBarberIsInBed();
 				}else{

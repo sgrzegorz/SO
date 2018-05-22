@@ -45,7 +45,7 @@ int main(int argc, char*argv[]){
 			fifo->barber_in_bed =0;
     		printf("%ld: BARBER: I go to sleep\n",getTime(fifo));
 			modifySemaphore(CLIENTS_BLOCADE,1);
-    		while(fifo->barber_in_bed!=0){
+    		while(fifo->barber_in_bed==0){
 
 			}
 
