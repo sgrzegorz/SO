@@ -73,7 +73,7 @@ void takeActionIfBarberIsInBed(){
 
 	printf("%ld:I sit on a chair: %i\n",getTime(fifo),getpid());
 	modifySemaphore(BED_QUEUE_BLOCADE,1);
-	kill(SIGRTMIN,fifo->barber_pid);
+	kill(fifo->barber_pid,SIGRTMIN);
 	sigsuspend(&mask);
 
 	printf("%ld: My chair is cut and I leave: %i\n",getTime(fifo),getpid());
@@ -94,7 +94,7 @@ void takeActionIfBarberIsNotInBed(){
 		sigsuspend(&mask);
 
 		printf("%ld: I sit on a chair: %i\n",getTime(fifo),getpid());
-		kill(SIGRTMIN,fifo->barber_pid);
+		kill(fifo->barber_pid,SIGRTMIN);
 		sigsuspend(&mask);
 
 		printf("%ld: My chair is cut and I leave: %i\n",getTime(fifo),getpid());

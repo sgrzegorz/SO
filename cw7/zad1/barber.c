@@ -53,14 +53,15 @@ int main(int argc, char*argv[]){
 			}
 
     		printf("%ld: BARBER: I wake up\n",getTime(fifo));
-			kill(SIGRTMIN,fifo->chair);
+			printf("%d\n",fifo->chair);
+			kill(fifo->chair,SIGTERM);
 			sigset_t mask;
 			sigemptyset(&mask);
 			sigsuspend(&mask);
 
 			printf("%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
     		printf("%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
-			kill(SIGRTMIN,fifo->chair);
+			kill(fifo->chair,SIGRTMIN);
 
  
     	}else{//There was a client in waiting room
@@ -70,14 +71,14 @@ int main(int argc, char*argv[]){
     		fifo->chair = getpid();
 			modifySemaphore(BED_QUEUE_BLOCADE,1);
 			modifySemaphore(CLIENTS_BLOCADE,1);
-			kill(SIGRTMIN,fifo->chair);
+			kill(fifo->chair,SIGRTMIN);
 			sigset_t mask;
 			sigemptyset(&mask);
 			sigsuspend(&mask);
 				
 			printf("%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
     		printf("%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
-			kill(SIGRTMIN,fifo->chair);
+			kill(fifo->chair,SIGRTMIN);
 
     	}
     	
