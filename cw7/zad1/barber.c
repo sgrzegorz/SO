@@ -30,10 +30,13 @@ int main(int argc, char*argv[]){
     prepareResources();
     if(atexit(releaseResources) != 0) FAILURE_EXIT("Failed to set atexit function\n");
 	signal(SIGINT,exitHandler);
-  	 signal(SIGTERM,exitHandler);
+  	signal(SIGTERM,exitHandler);
 	
     if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,1) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
 	if(semctl(semid,CLIENTS_BLOCADE,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
+	
+	
+	
 	
 	while(1){
 		
@@ -42,10 +45,10 @@ int main(int argc, char*argv[]){
 			
 			modifySemaphore(BED_QUEUE_BLOCADE,1);
     		
-			fifo->barber_in_bed =0;
+			fifo->barber_in_bed =1;
     		printf("%ld: BARBER: I go to sleep\n",getTime(fifo));
 			modifySemaphore(CLIENTS_BLOCADE,1);
-    		while(fifo->barber_in_bed==0){
+    		while(fifo->barber_in_bed==1){
 
 			}
 

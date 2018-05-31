@@ -30,7 +30,9 @@ int main(int argc, char *argv[]) {
 	if(atexit(releaseResources)!=0) FAILURE_EXIT("Failed to set atexit function\n");
 	prepareResources();
 	
-    
+    if(semctl(semid,CLIENTS_BLOCADE,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
+	
+	
     for(int i=0;i<number_of_clients;i++){
     	pid_t pid = fork();
     	if(pid == 0){
@@ -40,6 +42,7 @@ int main(int argc, char *argv[]) {
 				WRITE_MSG("I love1\n");
 				modifySemaphore(BED_QUEUE_BLOCADE,-1);
 				WRITE_MSG("I love2\n");
+				printf("%d\n",fifo->barber_in_bed);
 				if(fifo->barber_in_bed){
 					takeActionIfBarberIsInBed();
 				}else{
@@ -62,11 +65,12 @@ int main(int argc, char *argv[]) {
 void takeActionIfBarberIsInBed(){
 	fifo->barber_in_bed =0;
 	printf("%ld: I wake barber up: %i\n",getTime(fifo),getpid());
+
+	fifo->chair = getpid();
 	sigset_t mask;
 	sigemptyset(&mask);
 	sigsuspend(&mask);
 
-	fifo->chair = getpid();
 	printf("%ld:I sit on a chair: %i\n",getTime(fifo),getpid());
 	modifySemaphore(BED_QUEUE_BLOCADE,1);
 	kill(SIGRTMIN,fifo->barber_pid);
@@ -122,7 +126,7 @@ void prepareResources(){
     if(shmid == -1) FAILURE_EXIT("Cannot connect to shared memory\n");
     fifo = shmat(shmid,(void*) 0,0);
     if(fifo== (Fifo*)(-1)) FAILURE_EXIT("Cannot connect to shared memory1\n");
-    semid = semget(key, 2,0666);
+    semid = semget(key, 0,0);
     if(semid == -1) FAILURE_EXIT("Error when trying to open a semaphore\n");
 
 }
