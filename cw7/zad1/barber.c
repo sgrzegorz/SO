@@ -11,7 +11,7 @@ void releaseResources();
 void parseArgs(int argc, char *argv[]){
 	
 	if(argc!=2){
-		FAILURE_EXIT("./creator <size of queue> \n");
+		FAILURE_EXIT("./barber <size of queue> \n");
 	}
 	
 	int tmp = atoi(argv[1]);
@@ -32,7 +32,7 @@ int main(int argc, char*argv[]){
 	signal(SIGINT,exitHandler);
   	 signal(SIGTERM,exitHandler);
 	
-    if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
+    if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,1) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
 	if(semctl(semid,CLIENTS_BLOCADE,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
 	
 	while(1){
