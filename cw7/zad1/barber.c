@@ -53,16 +53,7 @@ int main(int argc, char*argv[]){
 
 			}
 
-    		printf(RED"%ld: BARBER: I wake up\n",getTime(fifo));
-			
-			kill(fifo->chair,SIGRTMIN);
-			sigset_t mask;
-			sigemptyset(&mask);
-			sigsuspend(&mask);
-
-			printf(MAG"%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
-    		printf(MAG"%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
-			kill(fifo->chair,SIGRTMIN);
+    		printf(RED"%ld: BARBER: I wake up\n",getTime(fifo));			
 
  
     	}else{//There was a client in waiting room
@@ -79,18 +70,17 @@ int main(int argc, char*argv[]){
 			sops[1].sem_op = 1;
 			if(semop(semid,&sops[0],2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
 
-
-			kill(fifo->chair,SIGRTMIN);
-			sigset_t mask;
-			sigemptyset(&mask);
-			sigsuspend(&mask);
-				
-			printf(MAG"%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
-    		printf(MAG"%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
-			kill(fifo->chair,SIGRTMIN);
-
     	}
     	
+		kill(fifo->chair,SIGRTMIN); //tell him to sit on a chair
+		sigset_t mask;
+		sigemptyset(&mask);
+		sigsuspend(&mask);
+			
+		printf(MAG"%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
+		printf(MAG"%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
+		kill(fifo->chair,SIGRTMIN);
+
     	modifySemaphore(BED_QUEUE_BLOCADE,-1);	
 
     }

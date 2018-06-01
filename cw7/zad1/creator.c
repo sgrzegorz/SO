@@ -85,6 +85,7 @@ void takeActionIfBarberIsInBed(){
 
 	printf(GRN"%ld:I sit on a chair: %i\n",getTime(fifo),getpid());
 	modifySemaphore(BED_QUEUE_BLOCADE,1);
+
 	kill(fifo->barber_pid,SIGRTMIN);
 	sigsuspend(&mask);
 
@@ -116,10 +117,11 @@ void takeActionIfBarberIsNotInBed(){
 	//	sigemptyset(&myset);
 	//	if(sigsuspend(&myset) == -1) FAILURE_EXIT("Error when setting process signal mask\n");
 	}
-	
-	
 }
 
+void haveChairCut(){
+
+}
 
 
 
