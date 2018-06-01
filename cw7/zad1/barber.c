@@ -28,7 +28,7 @@ int main(int argc, char*argv[]){
 	sigset_t set;
 	sigemptyset(&set);
 	sigaddset(&set, SIGRTMIN);
-	pthread_sigmask(SIGRTMIN, &set, NULL);
+	pthread_sigmask(SIG_BLOCK, &set, NULL);
 
 	parseArgs(argc,argv);
 	
@@ -43,6 +43,7 @@ int main(int argc, char*argv[]){
 		
 		
     	if(fifo->chair = pop(fifo)){
+			printf("\n");
 			printf(BLU"%ld: BARBER: I invite client: %i\n",getTime(fifo),fifo->chair);
     		
 			fifo->barber_in_cabinet =1;
@@ -54,7 +55,7 @@ int main(int argc, char*argv[]){
 			
 			fifo->barber_in_cabinet =1;
     		while(fifo->barber_in_bed==1){}
-
+			printf("\n");
     		printf(RED"%ld: BARBER: I wake up\n",getTime(fifo));	
     		
 
@@ -62,11 +63,12 @@ int main(int argc, char*argv[]){
 
     	sigset_t mask;
 		sigemptyset(&mask);
+		// printf("%i\n",fifo->chair);
 		kill(fifo->chair,SIGRTMIN); //tell him to sit on a chair
 		
-printf("1\n");
+
 		sigsuspend(&mask);
-		printf("2\n");
+	
 		printf(MAG"%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
 		printf(MAG"%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
 		kill(fifo->chair,SIGRTMIN);
@@ -84,9 +86,9 @@ void prepareResources(){
 	if(path == NULL) FAILURE_EXIT("Failed to get environment variable\n");
     key_t key = ftok(path,PROJECT_ID);
 	if(key == -1) FAILURE_EXIT("Failed to create project key\n");
-  
+	
 
-    shmid = shmget(key,sizeof(Fifo),IPC_CREAT|0666);
+    shmid = shmget(key,sizeof(Fifo),IPC_CREAT|IPC_EXCL|0666);
     if(shmid == -1) FAILURE_EXIT("Preparing resources failed: %s\n",strerror(errno));
 
     fifo = shmat(shmid,(void*) 0,0);
@@ -100,7 +102,7 @@ void prepareResources(){
     fifo->barber_pid = getpid();
    
   
-    semid = semget(key,2,IPC_CREAT|0666);
+    semid = semget(key,2,IPC_CREAT|IPC_EXCL|0666);
 	   
     if(semid == -1) FAILURE_EXIT("Error while creating semaphore %s\n",strerror(errno));
     

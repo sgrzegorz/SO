@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 	sigset_t set;
 	sigemptyset(&set);
 	sigaddset(&set, SIGRTMIN);
-	pthread_sigmask(SIGRTMIN, &set, NULL);
+	pthread_sigmask(SIG_BLOCK, &set, NULL);
 	signal(SIGINT,exitHandler);
 	signal(SIGRTMIN,handler);
 	
@@ -60,11 +60,12 @@ int main(int argc, char *argv[]) {
 
 				
 			}
+			
 			exit(0);
     	}	
     }
     
-	while(wait(NULL));
+	while(wait(NULL)>0);
     printf("All clients done they work, end\n");
     return 0;
 }
@@ -92,7 +93,7 @@ void takeActionIfBarberIsInBed(){
 
 void takeActionIfBarberIsNotInBed(){
 	if(push(fifo,getpid())){
-		printf("1\n");
+		
 		printf(BLU "%ld: I take place in waiting room: %i\n",getTime(fifo),getpid());
 		fifo->client_inside_blocade=0;
 		modifySemaphore(BED_QUEUE_BLOCADE,1);
@@ -100,7 +101,7 @@ void takeActionIfBarberIsNotInBed(){
 		sigemptyset(&mask);
 
 		sigsuspend(&mask);
-		printf("2\n");
+		printf("\n");
 		printf(GRN"%ld: I sit on a chair: %i\n",getTime(fifo),getpid());
 		kill(fifo->barber_pid,SIGRTMIN);
 
