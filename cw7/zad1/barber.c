@@ -25,6 +25,11 @@ void exitHandler(int signo){
 void handler(int signo){}
 
 int main(int argc, char*argv[]){
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGRTMIN);
+	pthread_sigmask(SIGRTMIN, &set, NULL);
+
 	parseArgs(argc,argv);
 	
     prepareResources();
@@ -33,14 +38,14 @@ int main(int argc, char*argv[]){
   	signal(SIGTERM,exitHandler);
 	signal(SIGRTMIN,handler);
 	
-	if(semctl(semid,CLIENTS_BLOCADE,SETVAL,-1) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
+	//it's only initial value to let barber check the queue and go to sleep
+	if(semctl(semid,CLIENTS_BLOCADE,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
     if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,1) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
 	
 	
 	
-	
 	while(1){
-		
+		printf("to fran1\n");
 		
     	if(isEmpty(fifo)){//In waiting room are no clients
 			
@@ -48,9 +53,15 @@ int main(int argc, char*argv[]){
     		
 			fifo->barber_in_bed =1;
     		printf(RED"%ld: BARBER: I go to sleep\n",getTime(fifo));
-			modifySemaphore(CLIENTS_BLOCADE,1);
-    		while(fifo->barber_in_bed==1){
+			// modifySemaphore(CLIENTS_BLOCADE,1);
+			sops[0].sem_num = CLIENTS_BLOCADE;
+			sops[0].sem_op = 1;
+			sops[1].sem_num = BED_QUEUE_BLOCADE;
+			sops[1].sem_op = 1;
+			if(semop(semid,&sops[0],2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
 
+    		while(fifo->barber_in_bed==1){
+				
 			}
 
     		printf(RED"%ld: BARBER: I wake up\n",getTime(fifo));			
@@ -80,7 +91,9 @@ int main(int argc, char*argv[]){
 		printf(MAG"%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
 		printf(MAG"%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
 		kill(fifo->chair,SIGRTMIN);
+		printf("to fran2\n");
 		sigsuspend(&mask);
+		printf("to fran3\n");
 		modifySemaphore(CLIENTS_BLOCADE,-1);	
     	modifySemaphore(BED_QUEUE_BLOCADE,-1);	
 

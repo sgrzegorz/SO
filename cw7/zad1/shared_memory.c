@@ -64,14 +64,14 @@ void modifySemaphore(int name, int val){
 	}
 }
 
-// long int getTime(Fifo *fifo){
-//     struct timespec time;
-//     if(clock_gettime(CLOCK_MONOTONIC,&time)== -1) FAILURE_EXIT("Getting time failed %s\n",strerror(errno));
-//     return (long int) (time.tv_sec *1000000 + time.tv_nsec/1000 - fifo->start_time ); 
-// }
-
-
 long int getTime(Fifo *fifo){
-    fifo->start_time++;
-    return fifo->start_time;
+    struct timespec time;
+    if(clock_gettime(CLOCK_MONOTONIC,&time)== -1) FAILURE_EXIT("Getting time failed %s\n",strerror(errno));
+    return (long int) (time.tv_sec *1000000 + time.tv_nsec/1000 - fifo->start_time ); 
 }
+
+
+// long int getTime(Fifo *fifo){
+//     fifo->start_time++;
+//     return fifo->start_time;
+// }
