@@ -38,63 +38,46 @@ int main(int argc, char*argv[]){
   	signal(SIGTERM,exitHandler);
 	signal(SIGRTMIN,handler);
 	
-	//it's only initial value to let barber check the queue and go to sleep
-	if(semctl(semid,CLIENTS_BLOCADE,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
-    if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,1) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
-	printf("Hi\n");
-	modifySemaphore(CLIENTS_BLOCADE,0);
-	printf("hel\n");
 	
 	while(1){
-		printf("to fran1\n");
+		
 		
     	if(fifo->chair = pop(fifo)){
 			printf(BLU"%ld: BARBER: I invite client: %i\n",getTime(fifo),fifo->chair);
     		
-			sops[0].sem_num = CLIENTS_BLOCADE;
-			sops[0].sem_op = 1;
-			sops[1].sem_num = BED_QUEUE_BLOCADE;
-			sops[1].sem_op = 1;
-			if(semop(semid,sops,2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
+			arg.val =1;
+			if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,arg) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
+			
 
     	}else{
     					
-			modifySemaphore(BED_QUEUE_BLOCADE,1);
-    		
 			fifo->barber_in_bed =1;
     		printf(RED"%ld: BARBER: I go to sleep\n",getTime(fifo));
-			// modifySemaphore(CLIENTS_BLOCADE,1);
-			sops[0].sem_num = CLIENTS_BLOCADE;
-			sops[0].sem_op = 1;
-			sops[1].sem_num = BED_QUEUE_BLOCADE;
-			sops[1].sem_op = 1;
-			if(semop(semid,sops,2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
-
-    		while(fifo->barber_in_bed==1){
-				
-			}
+			
+			arg.val =1;
+			if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,arg) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
+			
+    		while(fifo->barber_in_bed==1){}
 
     		printf(RED"%ld: BARBER: I wake up\n",getTime(fifo));	
     		
 
     	}
-    	
-		kill(fifo->chair,SIGRTMIN); //tell him to sit on a chair
-		sigset_t mask;
+		
+    	sigset_t mask;
 		sigemptyset(&mask);
+		kill(fifo->chair,SIGRTMIN); //tell him to sit on a chair
+		
+
 		sigsuspend(&mask);
-			
 		printf(MAG"%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
 		printf(MAG"%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
 		kill(fifo->chair,SIGRTMIN);
-		printf("to fran2\n");
+
 		sigsuspend(&mask);
-		
-		printf("to fran3\n");
-		modifySemaphore(CLIENTS_BLOCADE,1);	
-		printf("to fran4\n");
-    	modifySemaphore(BED_QUEUE_BLOCADE,-1);	
-		printf("to fran5\n");
+		arg.val =0;
+		if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,arg) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
+		while(fifo->client_inside_blocade == 1){}
     }
 
 }

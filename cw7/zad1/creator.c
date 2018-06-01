@@ -39,11 +39,7 @@ int main(int argc, char *argv[]) {
 	prepareResources();
 	
 	
-	arg.val = 0;
-	if(semctl(semid,CLIENTS_BLOCADE,SETVAL,arg) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
-    arg.val = 1;
-	if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,arg) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
-	
+    
 	
     for(int i=0;i<number_of_clients;i++){
     	pid_t pid = fork();
@@ -51,14 +47,8 @@ int main(int argc, char *argv[]) {
 			
     		for(int i=0;i<number_of_cuts;i++){
 
-				sops[0].sem_num = CLIENTS_BLOCADE;
-    			sops[0].sem_op = 0;
-				sops[0].sem_flg = 0;
-				sops[1].sem_num = BED_QUEUE_BLOCADE;
-    			sops[1].sem_op = -1;
-				sops[1].sem_flg = 0;
-				if(semop(semid,sops,2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
-
+				modifySemaphore(BED_QUEUE_BLOCADE,-1);
+				fifo->client_inside_blocade=1;
 
 
 				if(fifo->barber_in_bed){ //takeActionIfBarberIsInBed
@@ -84,18 +74,17 @@ void takeActionIfBarberIsInBed(){
 
 	printf(RED"%ld: I wake barber up: %i\n",getTime(fifo),getpid());
 	fifo->barber_in_bed =0;
-
 	fifo->chair = getpid();
 	sigset_t mask;
 	sigemptyset(&mask);
-	sigsuspend(&mask);
 
+	sigsuspend(&mask);
 	printf(GRN"%ld:I sit on a chair: %i\n",getTime(fifo),getpid());
+	fifo->client_inside_blocade=0;
 	modifySemaphore(BED_QUEUE_BLOCADE,1);
-
 	kill(fifo->barber_pid,SIGRTMIN);
-	sigsuspend(&mask);
 
+	sigsuspend(&mask);
 	printf(MAG"%ld: My chair is cut and I leave: %i\n",getTime(fifo),getpid());
 	kill(fifo->barber_pid,SIGRTMIN);
 }
@@ -103,20 +92,22 @@ void takeActionIfBarberIsInBed(){
 void takeActionIfBarberIsNotInBed(){
 	if(push(fifo,getpid())){
 		printf(BLU "%ld: I take place in waiting room: %i\n",getTime(fifo),getpid());
-		
+		fifo->client_inside_blocade=0;
 		modifySemaphore(BED_QUEUE_BLOCADE,1);
 		sigset_t mask;
 		sigemptyset(&mask);
-		sigsuspend(&mask);
 
+		sigsuspend(&mask);
 		printf(GRN"%ld: I sit on a chair: %i\n",getTime(fifo),getpid());
 		kill(fifo->barber_pid,SIGRTMIN);
-		sigsuspend(&mask);
 
+		sigsuspend(&mask);
 		printf(MAG"%ld: My chair is cut and I leave: %i\n",getTime(fifo),getpid());
 		kill(fifo->barber_pid,SIGRTMIN);
+
 	}else{
 		printf(BLU"%ld: The queue is full and I leave: %i\n",getTime(fifo),getpid());
+		fifo->client_inside_blocade=0;
 		modifySemaphore(BED_QUEUE_BLOCADE,1);
 	}
 	
@@ -124,10 +115,10 @@ void takeActionIfBarberIsNotInBed(){
 
 
 
-
 void releaseResources(){
 	if(shmdt(fifo) == -1) FAILURE_EXIT("Cannot detach data from shared memory\n"); 
 	// printf(BLU"Creator released resourcess: %i\n",getpid());
+
 }
 
 void prepareResources(){
@@ -142,6 +133,10 @@ void prepareResources(){
     if(fifo== (Fifo*)(-1)) FAILURE_EXIT("Cannot connect to shared memory1\n");
     semid = semget(key, 0,0666);
     if(semid == -1) FAILURE_EXIT("Error when trying to open a semaphore\n");
+
+	arg.val = 1;
+	if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,arg) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
+	fifo->client_inside_blocade=0;
 
 }
 

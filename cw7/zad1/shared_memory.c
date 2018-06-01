@@ -32,7 +32,8 @@ void init(Fifo * fifo){
 void modifySemaphore(int name, int val){
 	sops[0].sem_num = name;
     sops[0].sem_op = val;
-    
+    sops[0].sem_flg = 0;
+  
     char *semname;
     switch(name){
     	case CLIENTS_BLOCADE:

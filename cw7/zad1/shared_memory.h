@@ -40,7 +40,7 @@ typedef struct{
     long int start_time; 
     volatile int barber_in_bed;
     pid_t barber_pid;
-    volatile client_inside_blocade;
+    volatile int client_inside_blocade;
     
 }Fifo;
 
