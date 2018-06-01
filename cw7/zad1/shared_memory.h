@@ -41,7 +41,7 @@ typedef struct{
     volatile int barber_in_bed;
     pid_t barber_pid;
     volatile int client_inside_blocade;
-    
+    volatile int barber_in_cabinet;
 }Fifo;
 
 union semun  {

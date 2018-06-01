@@ -48,6 +48,7 @@ int main(int argc, char *argv[]) {
     		for(int i=0;i<number_of_cuts;i++){
 
 				modifySemaphore(BED_QUEUE_BLOCADE,-1);
+				while(fifo->barber_in_cabinet==0){}
 				fifo->client_inside_blocade=1;
 
 
@@ -137,6 +138,7 @@ void prepareResources(){
 	arg.val = 1;
 	if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,arg) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
 	fifo->client_inside_blocade=0;
+	fifo->barber_in_cabinet=1;
 
 }
 

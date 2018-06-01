@@ -45,25 +45,21 @@ int main(int argc, char*argv[]){
     	if(fifo->chair = pop(fifo)){
 			printf(BLU"%ld: BARBER: I invite client: %i\n",getTime(fifo),fifo->chair);
     		
-			arg.val =1;
-			if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,arg) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
-			
+			fifo->barber_in_cabinet =1;
 
     	}else{
     					
 			fifo->barber_in_bed =1;
     		printf(RED"%ld: BARBER: I go to sleep\n",getTime(fifo));
 			
-			arg.val =1;
-			if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,arg) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
-			
+			fifo->barber_in_cabinet =1;
     		while(fifo->barber_in_bed==1){}
 
     		printf(RED"%ld: BARBER: I wake up\n",getTime(fifo));	
     		
 
     	}
-		
+
     	sigset_t mask;
 		sigemptyset(&mask);
 		kill(fifo->chair,SIGRTMIN); //tell him to sit on a chair
@@ -75,8 +71,8 @@ int main(int argc, char*argv[]){
 		kill(fifo->chair,SIGRTMIN);
 
 		sigsuspend(&mask);
-		arg.val =0;
-		if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,arg) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
+		
+		fifo->barber_in_cabinet =0;
 		while(fifo->client_inside_blocade == 1){}
     }
 
