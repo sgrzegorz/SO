@@ -53,12 +53,13 @@ int main(int argc, char *argv[]) {
 
 				sops[0].sem_num = CLIENTS_BLOCADE;
     			sops[0].sem_op = 0;
+				sops[0].sem_flg = 0;
 				sops[1].sem_num = BED_QUEUE_BLOCADE;
     			sops[1].sem_op = -1;
-				if(semop(semid,&sops[0],2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
+				sops[1].sem_flg = 0;
+				if(semop(semid,sops,2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
 
-				// modifySemaphore(CLIENTS_BLOCADE,0);				
-				// modifySemaphore(BED_QUEUE_BLOCADE,-1);
+
 
 				if(fifo->barber_in_bed){ //takeActionIfBarberIsInBed
 					takeActionIfBarberIsInBed();
@@ -92,7 +93,11 @@ void takeActionIfBarberIsInBed(){
 	printf(GRN"%ld:I sit on a chair: %i\n",getTime(fifo),getpid());
 	modifySemaphore(BED_QUEUE_BLOCADE,1);
 
-	finishCutting();
+	kill(fifo->barber_pid,SIGRTMIN);
+	sigsuspend(&mask);
+
+	printf(MAG"%ld: My chair is cut and I leave: %i\n",getTime(fifo),getpid());
+	kill(fifo->barber_pid,SIGRTMIN);
 }
 
 void takeActionIfBarberIsNotInBed(){
@@ -105,22 +110,16 @@ void takeActionIfBarberIsNotInBed(){
 		sigsuspend(&mask);
 
 		printf(GRN"%ld: I sit on a chair: %i\n",getTime(fifo),getpid());
-		finishCutting();
+		kill(fifo->barber_pid,SIGRTMIN);
+		sigsuspend(&mask);
+
+		printf(MAG"%ld: My chair is cut and I leave: %i\n",getTime(fifo),getpid());
+		kill(fifo->barber_pid,SIGRTMIN);
 	}else{
 		printf(BLU"%ld: The queue is full and I leave: %i\n",getTime(fifo),getpid());
 		modifySemaphore(BED_QUEUE_BLOCADE,1);
 	}
 	
-}
-
-void finishCutting(){
-	sigset_t mask;
-	sigemptyset(&mask);
-	kill(fifo->barber_pid,SIGRTMIN);
-	sigsuspend(&mask);
-
-	printf(MAG"%ld: My chair is cut and I leave: %i\n",getTime(fifo),getpid());
-	kill(fifo->barber_pid,SIGRTMIN);
 }
 
 

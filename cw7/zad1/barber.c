@@ -50,12 +50,12 @@ int main(int argc, char*argv[]){
 		
     	if(fifo->chair = pop(fifo)){
 			printf(BLU"%ld: BARBER: I invite client: %i\n",getTime(fifo),fifo->chair);
-    					
+    		
 			sops[0].sem_num = CLIENTS_BLOCADE;
 			sops[0].sem_op = 1;
 			sops[1].sem_num = BED_QUEUE_BLOCADE;
 			sops[1].sem_op = 1;
-			if(semop(semid,&sops[0],2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
+			if(semop(semid,sops,2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
 
     	}else{
     					
@@ -68,7 +68,7 @@ int main(int argc, char*argv[]){
 			sops[0].sem_op = 1;
 			sops[1].sem_num = BED_QUEUE_BLOCADE;
 			sops[1].sem_op = 1;
-			if(semop(semid,&sops[0],2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
+			if(semop(semid,sops,2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
 
     		while(fifo->barber_in_bed==1){
 				
@@ -89,8 +89,9 @@ int main(int argc, char*argv[]){
 		kill(fifo->chair,SIGRTMIN);
 		printf("to fran2\n");
 		sigsuspend(&mask);
+		
 		printf("to fran3\n");
-		modifySemaphore(CLIENTS_BLOCADE,0);	
+		modifySemaphore(CLIENTS_BLOCADE,1);	
 		printf("to fran4\n");
     	modifySemaphore(BED_QUEUE_BLOCADE,-1);	
 		printf("to fran5\n");

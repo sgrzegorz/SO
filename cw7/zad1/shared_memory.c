@@ -27,21 +27,7 @@ void init(Fifo * fifo){
    
 }
 
-int isEmpty(Fifo * fifo){
-    if(getSize(fifo)== 0){
-        return 1;
-    }else{
-        return 0;
-    }
-}
 
-int isFull(Fifo * fifo){
-    if(getSize(fifo)== QUEUE_SIZE){
-        return 1;
-    }else{
-        return 0;
-    }    
-}
 
 void modifySemaphore(int name, int val){
 	sops[0].sem_num = name;
