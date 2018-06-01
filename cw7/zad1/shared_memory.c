@@ -44,8 +44,8 @@ int isFull(Fifo * fifo){
 }
 
 void modifySemaphore(int name, int val){
-	sops.sem_num = name;
-    sops.sem_op = val;
+	sops[0].sem_num = name;
+    sops[0].sem_op = val;
     
     char *semname;
     switch(name){
@@ -58,9 +58,9 @@ void modifySemaphore(int name, int val){
     }
 	if(val >= 0){
 		
-		if(semop(semid,&sops,1) == -1) FAILURE_EXIT("Failed to unlock %s\n",semname);
+		if(semop(semid,&sops[0],1) == -1) FAILURE_EXIT("Failed to unlock %s\n",semname);
 	}else{
-		if(semop(semid,&sops,1) == -1) FAILURE_EXIT("Failed to lock %s\n",semname);
+		if(semop(semid,&sops[0],1) == -1) FAILURE_EXIT("Failed to lock %s\n",semname);
 	}
 }
 

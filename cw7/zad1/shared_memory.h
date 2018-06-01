@@ -38,7 +38,7 @@ typedef struct{
     int head ,tail ,size , nelements ;
     pid_t chair;
     long int start_time; 
-    int barber_in_bed;
+    volatile int barber_in_bed;
     pid_t barber_pid;
     
 }Fifo;
@@ -58,9 +58,17 @@ int isEmpty(Fifo * fifo);
 int isFull(Fifo * fifo);
 long getTime();
 
-struct sembuf sops;
+struct sembuf sops[10];
 enum SemTypes{CLIENTS_BLOCADE =0, BED_QUEUE_BLOCADE=1};
 
 void modifySemaphore(int name, int val);
+
+#define RED  "\x1B[31m"
+#define GRN  "\x1B[32m"
+#define YEL  "\x1B[33m"
+#define BLU  "\x1B[34m"
+#define MAG  "\x1B[35m"
+#define CYN  "\x1B[36m"
+#define WHT  "\x1B[37m"
 #endif //SHAREDMEMORY_H
 
