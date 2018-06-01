@@ -38,8 +38,11 @@ int main(int argc, char *argv[]) {
 	if(atexit(releaseResources)!=0) FAILURE_EXIT("Failed to set atexit function\n");
 	prepareResources();
 	
-	if(semctl(semid,CLIENTS_BLOCADE,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
-    if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,1) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
+	
+	arg.val = 0;
+	if(semctl(semid,CLIENTS_BLOCADE,SETVAL,arg) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
+    arg.val = 1;
+	if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,arg) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
 	
 	
     for(int i=0;i<number_of_clients;i++){
@@ -93,12 +96,9 @@ void takeActionIfBarberIsInBed(){
 }
 
 void takeActionIfBarberIsNotInBed(){
-	if(isFull(fifo)){
-		printf(BLU"%ld: The queue is full and I leave: %i\n",getTime(fifo),getpid());
-		modifySemaphore(BED_QUEUE_BLOCADE,1);
-	}else{
+	if(push(fifo,getpid())){
 		printf(BLU "%ld: I take place in waiting room: %i\n",getTime(fifo),getpid());
-		push(fifo,getpid());
+		
 		modifySemaphore(BED_QUEUE_BLOCADE,1);
 		sigset_t mask;
 		sigemptyset(&mask);
@@ -106,8 +106,11 @@ void takeActionIfBarberIsNotInBed(){
 
 		printf(GRN"%ld: I sit on a chair: %i\n",getTime(fifo),getpid());
 		finishCutting();
-		
+	}else{
+		printf(BLU"%ld: The queue is full and I leave: %i\n",getTime(fifo),getpid());
+		modifySemaphore(BED_QUEUE_BLOCADE,1);
 	}
+	
 }
 
 void finishCutting(){
@@ -138,7 +141,7 @@ void prepareResources(){
     if(shmid == -1) FAILURE_EXIT("Cannot connect to shared memory\n");
     fifo = shmat(shmid,(void*) 0,0);
     if(fifo== (Fifo*)(-1)) FAILURE_EXIT("Cannot connect to shared memory1\n");
-    semid = semget(key, 0,0);
+    semid = semget(key, 0,0666);
     if(semid == -1) FAILURE_EXIT("Error when trying to open a semaphore\n");
 
 }

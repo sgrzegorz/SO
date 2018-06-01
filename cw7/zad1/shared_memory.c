@@ -5,14 +5,14 @@ int getSize(Fifo * fifo){
 }
 
 int push(Fifo *fifo,int val){
-    if(getSize(fifo) == QUEUE_SIZE) return -1;
+    if(getSize(fifo) == QUEUE_SIZE) return 0;
     fifo -> tail = (fifo->tail +1) % fifo->size;
     fifo ->nelements++;
     fifo->queue[fifo->tail] = val;
 }
 
 int pop(Fifo * fifo){
-    if(getSize(fifo) == 0) return -1;
+    if(getSize(fifo) == 0) return 0;
     int val = fifo->queue[fifo->head];
     fifo->head = (fifo->head +1) % fifo->size;
     fifo-> nelements--;

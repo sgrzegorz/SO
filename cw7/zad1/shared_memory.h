@@ -43,6 +43,15 @@ typedef struct{
     
 }Fifo;
 
+union semun  {
+    int val;
+    struct semid_ds *buf;
+    ushort *array;
+} arg;
+
+
+
+
 int semid;
 
 int getSize(Fifo * fifo);

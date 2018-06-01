@@ -41,14 +41,24 @@ int main(int argc, char*argv[]){
 	//it's only initial value to let barber check the queue and go to sleep
 	if(semctl(semid,CLIENTS_BLOCADE,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
     if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,1) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
-	
-	
+	printf("Hi\n");
+	modifySemaphore(CLIENTS_BLOCADE,0);
+	printf("hel\n");
 	
 	while(1){
 		printf("to fran1\n");
 		
-    	if(isEmpty(fifo)){//In waiting room are no clients
-			
+    	if(fifo->chair = pop(fifo)){
+			printf(BLU"%ld: BARBER: I invite client: %i\n",getTime(fifo),fifo->chair);
+    					
+			sops[0].sem_num = CLIENTS_BLOCADE;
+			sops[0].sem_op = 1;
+			sops[1].sem_num = BED_QUEUE_BLOCADE;
+			sops[1].sem_op = 1;
+			if(semop(semid,&sops[0],2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
+
+    	}else{
+    					
 			modifySemaphore(BED_QUEUE_BLOCADE,1);
     		
 			fifo->barber_in_bed =1;
@@ -64,22 +74,8 @@ int main(int argc, char*argv[]){
 				
 			}
 
-    		printf(RED"%ld: BARBER: I wake up\n",getTime(fifo));			
-
- 
-    	}else{//There was a client in waiting room
+    		printf(RED"%ld: BARBER: I wake up\n",getTime(fifo));	
     		
-    		pid_t client = pop(fifo);
-    		printf(BLU"%ld: BARBER: I invite client: %i\n",getTime(fifo),client);
-    		fifo->chair = client;
-			// modifySemaphore(BED_QUEUE_BLOCADE,1);
-			// modifySemaphore(CLIENTS_BLOCADE,1);
-			
-			sops[0].sem_num = CLIENTS_BLOCADE;
-			sops[0].sem_op = 1;
-			sops[1].sem_num = BED_QUEUE_BLOCADE;
-			sops[1].sem_op = 1;
-			if(semop(semid,&sops[0],2) == -1) FAILURE_EXIT("Failed to change semaphores unlock \n");
 
     	}
     	
@@ -94,9 +90,10 @@ int main(int argc, char*argv[]){
 		printf("to fran2\n");
 		sigsuspend(&mask);
 		printf("to fran3\n");
-		modifySemaphore(CLIENTS_BLOCADE,-1);	
+		modifySemaphore(CLIENTS_BLOCADE,0);	
+		printf("to fran4\n");
     	modifySemaphore(BED_QUEUE_BLOCADE,-1);	
-
+		printf("to fran5\n");
     }
 
 }
