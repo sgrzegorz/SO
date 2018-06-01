@@ -33,8 +33,8 @@ int main(int argc, char*argv[]){
   	signal(SIGTERM,exitHandler);
 	signal(SIGRTMIN,handler);
 	
+	if(semctl(semid,CLIENTS_BLOCADE,SETVAL,-1) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
     if(semctl(semid,BED_QUEUE_BLOCADE,SETVAL,1) == -1) FAILURE_EXIT("Failed to set semaphore1\n");
-	if(semctl(semid,CLIENTS_BLOCADE,SETVAL,0) == -1) FAILURE_EXIT("Failed to set semaphore2\n");
 	
 	
 	
@@ -80,7 +80,8 @@ int main(int argc, char*argv[]){
 		printf(MAG"%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
 		printf(MAG"%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
 		kill(fifo->chair,SIGRTMIN);
-
+		sigsuspend(&mask);
+		modifySemaphore(CLIENTS_BLOCADE,-1);	
     	modifySemaphore(BED_QUEUE_BLOCADE,-1);	
 
     }

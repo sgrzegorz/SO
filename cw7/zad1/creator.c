@@ -90,7 +90,7 @@ void takeActionIfBarberIsInBed(){
 	sigsuspend(&mask);
 
 	printf(MAG"%ld: My chair is cut and I leave: %i\n",getTime(fifo),getpid());
-	modifySemaphore(CLIENTS_BLOCADE,-1);
+	
 }
 
 void takeActionIfBarberIsNotInBed(){
@@ -111,7 +111,7 @@ void takeActionIfBarberIsNotInBed(){
 		sigsuspend(&mask);
 
 		printf(MAG"%ld: My chair is cut and I leave: %i\n",getTime(fifo),getpid());
-		modifySemaphore(CLIENTS_BLOCADE,-1);
+		kill(fifo->barber_pid,SIGRTMIN);
 		
 	//	sigset_t myset;
 	//	sigemptyset(&myset);
