@@ -64,8 +64,9 @@ int main(int argc, char*argv[]){
 		sigemptyset(&mask);
 		kill(fifo->chair,SIGRTMIN); //tell him to sit on a chair
 		
-
+printf("1\n");
 		sigsuspend(&mask);
+		printf("2\n");
 		printf(MAG"%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
 		printf(MAG"%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
 		kill(fifo->chair,SIGRTMIN);

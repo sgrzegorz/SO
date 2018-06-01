@@ -92,6 +92,7 @@ void takeActionIfBarberIsInBed(){
 
 void takeActionIfBarberIsNotInBed(){
 	if(push(fifo,getpid())){
+		printf("1\n");
 		printf(BLU "%ld: I take place in waiting room: %i\n",getTime(fifo),getpid());
 		fifo->client_inside_blocade=0;
 		modifySemaphore(BED_QUEUE_BLOCADE,1);
@@ -99,6 +100,7 @@ void takeActionIfBarberIsNotInBed(){
 		sigemptyset(&mask);
 
 		sigsuspend(&mask);
+		printf("2\n");
 		printf(GRN"%ld: I sit on a chair: %i\n",getTime(fifo),getpid());
 		kill(fifo->barber_pid,SIGRTMIN);
 
