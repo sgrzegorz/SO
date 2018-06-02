@@ -73,7 +73,7 @@ int main(int argc, char*argv[]){
 		printf(MAG"%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
 		kill(fifo->chair,SIGRTMIN);
 
-		sigsuspend(&mask);
+		// sigsuspend(&mask);
 		
 		fifo->barber_in_cabinet =0;
 		while(fifo->client_inside_blocade == 1){}

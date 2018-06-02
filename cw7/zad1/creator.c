@@ -88,7 +88,7 @@ void takeActionIfBarberIsInBed(){
 
 	sigsuspend(&mask);
 	printf(MAG"%ld: My chair is cut and I leave: %i\n",getTime(fifo),getpid());
-	kill(fifo->barber_pid,SIGRTMIN);
+	// kill(fifo->barber_pid,SIGRTMIN);
 }
 
 void takeActionIfBarberIsNotInBed(){
@@ -107,7 +107,7 @@ void takeActionIfBarberIsNotInBed(){
 
 		sigsuspend(&mask);
 		printf(MAG"%ld: My chair is cut and I leave: %i\n",getTime(fifo),getpid());
-		kill(fifo->barber_pid,SIGRTMIN);
+		// kill(fifo->barber_pid,SIGRTMIN);
 
 	}else{
 		printf(BLU"%ld: The queue is full and I leave: %i\n",getTime(fifo),getpid());
