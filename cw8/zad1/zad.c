@@ -19,7 +19,8 @@ int W,H,C;
 int **I; //picture
 double **K; //filtr
 int **J; //new picture
-FILE *picture,*filter;
+int number_of_threads;
+FILE *picture,*filter,*new_picture;
 //convert dog.jpg -compress none dog.pgm
 void readFromPictureFile(){
     picture = fopen("../dog.pgm","r");
@@ -71,12 +72,23 @@ int getNewValue(int x, int y){
     return (int) round(sum);
 }
 
-int filterThePicture(){
-    
-
+void filterPicture(int thread_index){
+    int start_column = H/number_of_threads*thread_index;
+    int next_start_column = H/number_of_threads*(thread_index+1);
+    if(thread_index ==number_of_threads-1)  next_start_column = H;
+    for(int h=start_column;h<next_start_column;h++){
+        for(int w=0;w<W;w++){
+            J[h][w] = getNewValue(h,w);
+        }
+        
+    }
 }
 
 void saveResults(){
+    new_picture = fopen("../new_picture.png","w");
+    if(new_picture == NULL) FAILURE_EXIT("Couldn't create new picture\n");
+    
+
 
 }
 
