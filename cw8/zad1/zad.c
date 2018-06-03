@@ -5,6 +5,15 @@
 #include <errno.h>
 #include <math.h>
 #define FAILURE_EXIT(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));exit(-1);}
+#define max(a, b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
+#define min(c, d) \
+   ({ __typeof__ (c) _c = (c); \
+       __typeof__ (d) _d = (d); \
+     _c > _d ? _d : _c; })
+
 
 int W,H,C;
 int **I; //picture
@@ -52,14 +61,18 @@ void readFromFilterFile(){
     }  
 }
 
-int 
-
-int filterThePicture(){
-    for(int i=0;i<C;i++){
-        for(int j=0;j<C;j++){
-            
+int getNewValue(int x, int y){
+    double sum=0;
+    for(double i=0;i<C;i++){
+        for(double j=0;j<C;j++){
+            sum+=I[(int)max(1,x-C/2+i)][(int)max(1,y-C/2+j)]*K[(int)i][(int)j];
         }
     }
+    return (int) round(sum);
+}
+
+int filterThePicture(){
+    
 
 }
 
