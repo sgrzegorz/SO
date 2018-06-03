@@ -70,11 +70,11 @@ int parseArgs(int argc, char *argv[]){
 }
 
 void releaseResources(){
-	if(munmap(fifo,sizeof(Fifo)) == -1) FAILURE_EXIT("Cannot delete the mapping from process address space\n");
+	if(munmap(fifo,sizeof(Fifo)) == -1) printf("Cannot delete the mapping from process address space\n");
 
-	if(shm_unlink("/shared") == -1) FAILURE_EXIT("Remove shared memory segment\n");
+	if(shm_unlink("/shared") == -1) printf("Remove shared memory segment\n");
 
-	if(sem_close(semaphore) == -1) FAILURE_EXIT("Failed to close named semaphore\n");
+	if(sem_close(semaphore) == -1) printf("Failed to close named semaphore\n");
 
 	printf("Barber released resourcess\n");
 }
