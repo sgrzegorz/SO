@@ -57,6 +57,7 @@ void readFromPictureFile(){
 }
 
 void readFromFilterFile(){
+    
     filter = fopen(filter_path,"r");
     if (filter == NULL){
         printInfo();
@@ -64,33 +65,45 @@ void readFromFilterFile(){
     }
 
     fscanf(filter,"%i",&C);
+    
     K = calloc(C,sizeof(double*));
-    for(int w=0;w<W;w++){        
-        K[w] = calloc(C,sizeof(double));
+   
+    for(int h=0;h<C;h++){        
+        K[h] = calloc(C,sizeof(double));
     }
+    
     for(int h=0;h<C;h++){
         for(int w=0;w<C;w++){           
-            fscanf(filter,"%d",&I[h][w]);
+            fscanf(filter,"%lf",&K[h][w]);
         }
     }  
+   
     fclose(filter);
 }
 
 int getNewValue(int H_PIXEL, int W_PIXEL){
+    
+    double c = ceil((double) C/2);
     double sum=0;
+    
     for(double h=0;h<C;h++){
-        int h_index = (int)max(1,H_PIXEL-ceil((double) C/2)+h);
+        int h_index = (int)max(1,H_PIXEL-c+h);
         for(double w=0;w<C;w++){
-            int w_index = (int)max(1,W_PIXEL-ceil((double) C/2)+w);
+         
+            int w_index = (int)max(1,W_PIXEL-c+w);
             sum+=I[h_index][w_index]*K[(int)h][(int)w];
         }
     }
+ 
+    if(sum <0) sum =0;
     return (int) round(sum);
 }
 
 void *filterPicture(void* thread_i){
     int thread_index = (intptr_t) thread_i;
-    printf(" %i \n",thread_index);
+    // printf("TTT\n");
+
+    // printf(" %i \n",thread_index);
     int start_column = H/number_of_threads*thread_index;
     int next_start_column = H/number_of_threads*(thread_index+1);
     if(thread_index ==number_of_threads-1)  next_start_column = H;
@@ -149,8 +162,8 @@ int main(int argc, char * argv[]){
     parseCommandArgs(argc,argv);
     readFromPictureFile();
     readFromFilterFile();
-    
-
+    if(C > W || C >H) FAILURE_EXIT("Filter is bigger than picture \n");
+     
     threads = calloc(number_of_threads,sizeof(pthread_t));
 
     for(int i=0;i<number_of_threads;i++){
