@@ -53,6 +53,7 @@ void readFromPictureFile(){
 
     fscanf(picture,"%s",picture_name);
     fscanf(picture,"%i %i",&W,&H);
+    if(number_of_threads > H) FAILURE_EXIT("Too many threads\n");
     fscanf(picture,"%s",max_grey_number);
     
     I = calloc(H,sizeof(int*));
