@@ -6,6 +6,8 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <math.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #define _GNU_SOURCE
 #define FAILURE_EXIT(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));exit(-1);}
 #define max(a, b) \
@@ -28,6 +30,18 @@ FILE *picture,*filter,*new_picture;
 char * picture_path, *filter_path, *new_picture_path;
 //convert dog.jpg -compress none dog.pgm
 void printInfo();
+
+
+typedef struct {
+    struct timeval real;
+    struct timeval user;
+    struct timeval system;
+} Time;
+
+Time measureTime();
+void printTimeDifference(Time T2, Time T1);
+
+
 
 void readFromPictureFile(){
     picture = fopen(picture_path,"r");
@@ -89,8 +103,8 @@ int getNewValue(int H_PIXEL, int W_PIXEL){
     for(double h=0;h<C;h++){
         int h_index = (int)max(1,H_PIXEL-c+h);
         for(double w=0;w<C;w++){
-         
             int w_index = (int)max(1,W_PIXEL-c+w);
+            if(w_index >=W || h_index >=H) return 0;
             sum+=I[h_index][w_index]*K[(int)h][(int)w];
         }
     }
@@ -146,6 +160,7 @@ void printInfo(){
     printf("Please enter correct arguments:\n");
     printf("./zad <number of threads> <picture path> <filter path> <output path>\n");
     printf("./zad 5 ../dog.pgm ../edge_detection.txt ../newdog.pgm\n");
+    exit(0);
 }
 
 void parseCommandArgs(int argc, char * argv[]){
@@ -165,7 +180,7 @@ int main(int argc, char * argv[]){
     if(C > W || C >H) FAILURE_EXIT("Filter is bigger than picture \n");
      
     threads = calloc(number_of_threads,sizeof(pthread_t));
-
+    Time T1 = measureTime();
     for(int i=0;i<number_of_threads;i++){
         pthread_create(&threads[i],NULL,filterPicture,(void *) (intptr_t) i);
     }
@@ -174,7 +189,41 @@ int main(int argc, char * argv[]){
     for(int i=0;i<number_of_threads;i++){
         if(pthread_join(threads[i],NULL)!=0) FAILURE_EXIT("Waiting for thread failed\n");
     }
-
+    Time T2 = measureTime();
+    printTimeDifference(T2,T1);
     saveResults();
-    printf("hello workd\n");
+    printf("Picture ready in: %s \n",new_picture_path);
+}
+
+
+
+Time measureTime(){
+    Time T;
+    gettimeofday(&T.real , NULL);
+
+    struct rusage tmp;
+    getrusage(RUSAGE_SELF, &tmp);
+
+    T.user = tmp.ru_utime;
+    T.system = tmp.ru_stime;
+    return T;
+}
+
+void printTimeDifference(Time T2, Time T1){
+
+    if(T2.real.tv_usec >=T1.real.tv_usec){
+        printf("real: %ld.%06ld s\n", T2.real.tv_sec - T1.real.tv_sec, T2.real.tv_usec - T1.real.tv_usec);
+    }else{
+        printf("real: %ld.%06ld s\n", T2.real.tv_sec - T1.real.tv_sec -1, (1000000+T2.real.tv_usec) - T1.real.tv_usec);
+    }
+    if(T2.user.tv_usec >=T1.user.tv_usec){
+        printf("user: %ld.%06ld s\n", T2.user.tv_sec - T1.user.tv_sec, T2.user.tv_usec - T1.user.tv_usec);
+    }else{
+        printf("user: %ld.%06ld s\n", T2.user.tv_sec - T1.user.tv_sec-1, 1000000+T2.user.tv_usec - T1.user.tv_usec);
+    }
+    if(T2.system.tv_usec >=T1.system.tv_usec){
+        printf("system: %ld.%06ld s\n", T2.system.tv_sec - T1.system.tv_sec, T2.system.tv_usec - T1.system.tv_usec);
+    }else{
+        printf("system: %ld.%06ld s\n", T2.system.tv_sec - T1.system.tv_sec-1, 1000000+T2.system.tv_usec - T1.system.tv_usec);
+    }
 }
