@@ -1,24 +1,24 @@
 -------------------------------------------------------------------
 =TEST 0 : threads: 1
-real: 0.045563 s
-user: 0.045570 s
+real: 0.047124 s
+user: 0.047134 s
 system: 0.000000 s
 Picture ready in: ./newdog.pgm 
 -------------------------------------------------------------------
 =TEST 1 : threads: 2
-real: 0.033512 s
-user: 0.061267 s
-system: 0.000140 s
+real: 0.026934 s
+user: 0.052989 s
+system: 0.000115 s
 Picture ready in: ./newdog.pgm 
 -------------------------------------------------------------------
 =TEST 2 : threads: 4
-real: 0.027214 s
-user: 0.083493 s
-system: 0.000582 s
+real: 0.024341 s
+user: 0.077454 s
+system: 0.000420 s
 Picture ready in: ./newdog.pgm 
 -------------------------------------------------------------------
 =TEST 3 : threads: 8
-real: 0.016944 s
-user: 0.109162 s
+real: 0.017332 s
+user: 0.107301 s
 system: 0.000000 s
 Picture ready in: ./newdog.pgm 
