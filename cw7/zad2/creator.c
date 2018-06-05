@@ -1,7 +1,5 @@
 #include "shared_memory.h"
 
-int shmid;
-Fifo *fifo;
 int number_of_clients, number_of_cuts;
 
 void getChair();
@@ -27,7 +25,7 @@ void exitHandler(int signo){
 void handler(int signo){}
 
 int main(int argc, char *argv[]) {
-	prepareResources();
+	prepareResources(argc,argv);
 	
 	
     
@@ -116,10 +114,10 @@ void takeActionIfBarberIsNotInBed(){
 
 void releaseResources(){
 	if(munmap(fifo,sizeof(Fifo) == -1)) printf("Failed to delete mapping in virtual address space of the process\n");
-	if(semclose(semaphore) == -1) printf("Failed to close semaphore\n");
+	if(sem_close(semaphore) == -1) printf("Failed to close semaphore\n");
 }
 
-void prepareResources(){
+void prepareResources(int argc, char*argv[]){
 	sigset_t set;
 	sigemptyset(&set);
 	sigaddset(&set, SIGRTMIN);
@@ -130,15 +128,15 @@ void prepareResources(){
 	parseArgs(argc,argv);
 	if(atexit(releaseResources)!=0) FAILURE_EXIT("Failed to set atexit function\n");
 
-	semaphore = sem_open("/semaphore",0);
+	semaphore = sem_open("/semaphore",O_RDWR);
 	if(semaphore == SEM_FAILED) FAILURE_EXIT("Failed to open existing semaphore\n");
 
 
 
-	int fd = shm_open("/shared",O_RDWR,0);
-	if(fd ==-1) FAILURE_EXIT("Opening an existing POSIX shared memory object failed");
+	shm_fd = shm_open("/shared",O_RDWR,0);
+	if(shm_fd ==-1) FAILURE_EXIT("Opening an existing POSIX shared memory object failed");
 
-	fifo = mmap(NULL,sizeof(Fifo),PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+	fifo = mmap(NULL,sizeof(Fifo),PROT_READ|PROT_WRITE,MAP_SHARED,shm_fd,0);
 	if(fifo == MAP_FAILED) FAILURE_EXIT("Create new mapping in virtual address space of the process failed\n");
 
 

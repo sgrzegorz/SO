@@ -11,18 +11,18 @@
 #include <errno.h>
 #include <memory.h>
 #include <signal.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
+
+
 #include <sys/sem.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
+
+
 #include <sys/sem.h>
-#include <sys/ipc.h>
+
 #include <sys/shm.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/types.h>
+
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
@@ -30,7 +30,10 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <fcntl.h>
-#include "shared_utils.h"
+#include <sys/mman.h>
+#include <sys/mman.h>
+    
+
 
 
 
@@ -50,8 +53,8 @@ typedef struct{
 
 
 sem_t *semaphore;
-Fifo *fifo=NULL;
-
+Fifo *fifo;
+int shm_fd;
 
 
 int push(Fifo *fifo,int val);

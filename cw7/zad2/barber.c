@@ -5,7 +5,7 @@ void prepareResources();
 
 
 int main(int argc, char*argv[]){	
-    prepareResources();
+    prepareResources(argc,argv);
     
 	
 	
@@ -80,7 +80,9 @@ void releaseResources(){
 }
 
 
-void prepareResources(){
+void prepareResources(int argc, char*argv[]){
+	if(atexit(releaseResources) != 0) FAILURE_EXIT("Failed to set atexit function\n");
+    
 	sigset_t set;
 	sigemptyset(&set);
 	sigaddset(&set, SIGRTMIN);
@@ -89,12 +91,12 @@ void prepareResources(){
   	signal(SIGTERM,exitHandler);
 	signal(SIGRTMIN,handler);
 	
-	int fd = shm_open("/shared", O_RDWR, O_CREAT|O_EXCL);
-	if(fd == -1) FAILURE_EXIT("Creating shared memory failed\n");
+	shm_fd = shm_open("/shared", O_RDWR|O_CREAT|O_EXCL,0666);
+	if(shm_fd == -1) FAILURE_EXIT("Creating shared memory failed: %s\n",strerror(errno));
 
-	if(ftruncate(fd,sizeof(Fifo)) == -1) FAILURE_EXIT("Giving shared memory size failed\n");
+	if(ftruncate(shm_fd,sizeof(Fifo)) == -1) FAILURE_EXIT("Giving shared memory size failed\n");
 	
-	fifo = mmap(NULL,sizeof(Fifo),PROT_READ|PROT_WRITE,MAP_SHARED)
+	fifo = mmap(NULL,sizeof(Fifo),PROT_READ|PROT_WRITE,MAP_SHARED,shm_fd,0);
 	if(fifo == (Fifo*)(-1)) FAILURE_EXIT("Failed to create a new mapping in virtual adress space\n");
 
 	semaphore = sem_open("/semaphore",O_CREAT|O_EXCL,O_RDWR,1);
@@ -103,14 +105,11 @@ void prepareResources(){
     init(fifo);
 	fifo->start_time=0;
 	fifo->start_time = getTime(fifo);
-    fifo->size = parseArgs(argc,argv);;
+    fifo->size = parseArgs(argc,argv);
     fifo->barber_pid = getpid();
    
   
-    semid = semget("/semaphore",2,O_CREAT|O_EXCL,O_RDWR,1);
-    if(semid == SEM_FAILED) FAILURE_EXIT("Error while creating semaphore %s\n",strerror(errno));
-	
-	if(atexit(releaseResources) != 0) FAILURE_EXIT("Failed to set atexit function\n");
     
+	
 }
 
