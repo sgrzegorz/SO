@@ -11,18 +11,12 @@
 #include <errno.h>
 #include <memory.h>
 #include <signal.h>
-
-
 #include <sys/sem.h>
 #include <unistd.h>
-
-
 #include <sys/sem.h>
-
 #include <sys/shm.h>
 #include <stdio.h>
 #include <unistd.h>
-
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
@@ -33,8 +27,6 @@
 #include <sys/mman.h>
 #include <sys/mman.h>
     
-
-
 
 
 #define FAILURE_EXIT(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));exit(-1);}
