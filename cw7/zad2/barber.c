@@ -74,8 +74,9 @@ void releaseResources(){
 
 	if(shm_unlink("/shared") == -1) printf("Remove shared memory segment\n");
 
-	if(sem_close(semaphore) == -1) printf("Failed to close named semaphore\n");
+	if(sem_close(semaphore) == -1) printf("Failed to close named semaphore: %s\n",strerror(errno));
 
+	if(sem_unlink("/semaphore")==-1) printf("Failed to remove POSIX semaphore\n");
 	printf("Barber released resourcess\n");
 }
 
@@ -99,8 +100,8 @@ void prepareResources(int argc, char*argv[]){
 	fifo = mmap(NULL,sizeof(Fifo),PROT_READ|PROT_WRITE,MAP_SHARED,shm_fd,0);
 	if(fifo == (Fifo*)(-1)) FAILURE_EXIT("Failed to create a new mapping in virtual adress space\n");
 
-	semaphore = sem_open("/semaphore",O_CREAT|O_EXCL,O_RDWR,1);
-	if(semaphore == SEM_FAILED) FAILURE_EXIT("Creating POSIX semaphore failed\n");
+	semaphore = sem_open("/semaphore",O_CREAT|O_EXCL|O_RDWR,0666,1);
+	if(semaphore == SEM_FAILED) FAILURE_EXIT("Creating POSIX semaphore failed: %s\n",strerror(errno));
    
     init(fifo);
 	fifo->start_time=0;

@@ -113,8 +113,8 @@ void takeActionIfBarberIsNotInBed(){
 
 
 void releaseResources(){
-	if(munmap(fifo,sizeof(Fifo) == -1)) printf("Failed to delete mapping in virtual address space of the process\n");
-	if(sem_close(semaphore) == -1) printf("Failed to close semaphore\n");
+	if(munmap(fifo,sizeof(Fifo)) == -1) printf("Failed to delete mapping in virtual address space of the process: %s\n",strerror(errno));
+	if(sem_close(semaphore) == -1) printf("Failed to close semaphore: %s\n",strerror(errno));
 }
 
 void prepareResources(int argc, char*argv[]){
@@ -128,17 +128,20 @@ void prepareResources(int argc, char*argv[]){
 	parseArgs(argc,argv);
 	if(atexit(releaseResources)!=0) FAILURE_EXIT("Failed to set atexit function\n");
 
-	semaphore = sem_open("/semaphore",O_RDWR);
-	if(semaphore == SEM_FAILED) FAILURE_EXIT("Failed to open existing semaphore\n");
-
-
-
 	shm_fd = shm_open("/shared",O_RDWR,0);
 	if(shm_fd ==-1) FAILURE_EXIT("Opening an existing POSIX shared memory object failed");
 
 	fifo = mmap(NULL,sizeof(Fifo),PROT_READ|PROT_WRITE,MAP_SHARED,shm_fd,0);
-	if(fifo == MAP_FAILED) FAILURE_EXIT("Create new mapping in virtual address space of the process failed\n");
+	if(fifo ==  (Fifo*)(-1)) FAILURE_EXIT("Create new mapping in virtual address space of the process failed\n");
 
+	semaphore = sem_open("/semaphore",O_RDWR);
+	if(semaphore == SEM_FAILED) FAILURE_EXIT("Failed to open existing semaphore\n");
+
+	int sval;
+	sem_getvalue(semaphore, &sval);
+	if(sval == 0) sem_post(semaphore);
+
+	
 
 }
 
