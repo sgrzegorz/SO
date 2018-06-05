@@ -103,8 +103,9 @@ void takeActionIfBarberIsNotInBed(){
 		sigsuspend(&mask);
 		printf("\n");
 		printf(GRN"%ld: I sit on a chair: %i\n",getTime(fifo),getpid());
+		fifo->barber_in_cabinet =1;
 		kill(fifo->barber_pid,SIGRTMIN);
-
+		
 		sigsuspend(&mask);
 		printf(MAG"%ld: My chair is cut and I leave: %i\n",getTime(fifo),getpid());
 		// kill(fifo->barber_pid,SIGRTMIN);
