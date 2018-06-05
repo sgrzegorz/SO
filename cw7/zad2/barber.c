@@ -16,7 +16,7 @@ int main(int argc, char*argv[]){
 			printf("\n");
 			printf(BLU"%ld: BARBER: I invite client: %i\n",getTime(fifo),fifo->chair);
     		
-			fifo->barber_in_cabinet =1;
+			//fifo->barber_in_cabinet =1;
 
     	}else{
     					
@@ -38,7 +38,7 @@ int main(int argc, char*argv[]){
 		
 
 		sigsuspend(&mask);
-	
+		fifo->barber_in_cabinet =1;
 		printf(MAG"%ld: BARBER: I cut: %i\n",getTime(fifo),fifo->chair);
 		printf(MAG"%ld: BARBER: I finished cut: %i\n",getTime(fifo),fifo->chair);
 		kill(fifo->chair,SIGRTMIN);
