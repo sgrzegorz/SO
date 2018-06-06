@@ -31,21 +31,14 @@
 #define FAILURE_EXIT(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));exit(-1);}
 #define WRITE_MSG(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 #define W(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
-#define QUEUE_SIZE 4096
+#define MAX_BUFFER_SIZE 4096;
 #define PROJECT_ID 12
 
 typedef struct{
-	
-
-pid_t queue[QUEUE_SIZE];
-    int head ,tail ,size , nelements ;
-    pid_t chair;
-    long int start_time; 
-    volatile int barber_in_bed;
-    pid_t barber_pid;
-    volatile int client_inside_blocade;
-    volatile int barber_in_cabinet;
-}Fifo;
+    char* array[MAX_BUFFER_SIZE];
+    int consume_i ,produce_i, nelements, size;
+    
+}Buffer;
 
 
 
