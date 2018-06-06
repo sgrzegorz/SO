@@ -50,20 +50,20 @@ void * doProducerWork(void * arg){
         while(buf.nelements == N){
             pthread_cond_wait(&not_full,&mutexes[buf.produce_i]);
         }
-        printf("1\n");
+        printf("-1 %ld \n",pthread_self());
         // ------------------- produce -------------------    
         
         
         char * line = malloc(4096);
         if(fgets(line, 4096, file) == NULL) return NULL;
-        if(verbose) printf(">>> %s\n",line);
+        printf(">> %s\n",line);
         buf.array[buf.produce_i] = line;
         int previous = buf.produce_i;
         buf.produce_i = (buf.produce_i +1) % N;
         buf.nelements++;
          
         // --------------------------------------------------
-        printf("2\n");
+        printf("+1 %ld \n",pthread_self());
         pthread_cond_signal(&not_empty);
         pthread_mutex_unlock(&mutexes[previous]);
     }
@@ -81,22 +81,23 @@ void * doConsumerWork(void *arg){
                 return NULL; 
             } 
         }
-        printf("3\n");
+        printf("-2 %ld \n",pthread_self());
         // ------------------- consume ---------------
         char* line =  buf.array[buf.consume_i];
         buf.array[buf.consume_i] = NULL;
 
-        switch(search_mode){
-            case -1:
-                if(strlen(line) < L) printf(MAG "%i: %s",buf.consume_i,line);
-                break; 
-            case 0:
-                if(strlen(line) == 0) printf(MAG "%i: %s",buf.consume_i,line); 
-                break;
-            case 1:
-                if(strlen(line) > 0) printf(MAG "%i: %s",buf.consume_i,line); 
-                break;
-        }
+        // switch(search_mode){
+        //     case -1:
+        //         if(strlen(line) < L) printf(MAG "%i: %s",buf.consume_i,line);
+        //         break; 
+        //     case 0:
+        //         if(strlen(line) == 0) printf(MAG "%i: %s",buf.consume_i,line); 
+        //         break;
+        //     case 1:
+        //         if(strlen(line) > 0) printf(MAG "%i: %s",buf.consume_i,line); 
+        //         break;
+        // }
+        printf(">> %s",line);
         free(line);
         
         int previous = buf.consume_i;
@@ -104,7 +105,7 @@ void * doConsumerWork(void *arg){
         buf.nelements--;
         // -------------------------------------------
 
-        printf("4\n");
+        printf("+2 %ld \n",pthread_self());
 
         pthread_cond_signal(&not_full);
         pthread_mutex_unlock(&mutexes[previous]);
