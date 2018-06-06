@@ -9,6 +9,7 @@
 #include <math.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+
 #define _GNU_SOURCE
 #define FAILURE_EXIT(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));exit(-1);}
 #define MAG  "\x1B[35m"
@@ -42,34 +43,34 @@ void signalHandler(int signo){
 }
 
 
-void * doProducerWork(void * thread_i){
-    int thread_id = (intptr_t) thread_i;
+void * doProducerWork(void * arg){
+    
     while(1){
         pthread_mutex_lock(&mutexes[buf.produce_i]);
         while(buf.nelements == N){
             pthread_cond_wait(&not_full,&mutexes[buf.produce_i]);
         }
-
+        printf("1\n");
         // ------------------- produce -------------------    
         
-        if(verbose) printf("I allocate memory\n");
+        
         char * line = malloc(4096);
         if(fgets(line, 4096, file) == NULL) return NULL;
-
+        if(verbose) printf(">>> %s\n",line);
         buf.array[buf.produce_i] = line;
         int previous = buf.produce_i;
         buf.produce_i = (buf.produce_i +1) % N;
         buf.nelements++;
          
         // --------------------------------------------------
-
+        printf("2\n");
         pthread_cond_signal(&not_empty);
         pthread_mutex_unlock(&mutexes[previous]);
     }
 }
 
-void * doConsumerWork(void *thread_i){
-    int thread_id = (intptr_t) thread_i;
+void * doConsumerWork(void *arg){
+    
     while(1){
         pthread_mutex_lock(&mutexes[buf.produce_i]);
         
@@ -80,7 +81,7 @@ void * doConsumerWork(void *thread_i){
                 return NULL; 
             } 
         }
-        
+        printf("3\n");
         // ------------------- consume ---------------
         char* line =  buf.array[buf.consume_i];
         buf.array[buf.consume_i] = NULL;
@@ -102,6 +103,8 @@ void * doConsumerWork(void *thread_i){
         buf.consume_i = (buf.consume_i +1) % N;
         buf.nelements--;
         // -------------------------------------------
+
+        printf("4\n");
 
         pthread_cond_signal(&not_full);
         pthread_mutex_unlock(&mutexes[previous]);
