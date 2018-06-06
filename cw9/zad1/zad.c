@@ -13,16 +13,17 @@
 #define MAG  "\x1B[35m"
 #define CYN  "\x1B[36m"
 
-int N;
-char *buffor[4096];
+#define MAX_BUFFER_SIZE 4096;
+
 int L;
-int P, K, N;
+int P, K;
 char file_name[40];
 int search_mode,verbose,nk;
-int  consument_index, producer_index;
-mutex_t *mutex;
-cond_t not_full, not_empty;
+pthread_t *threads;
+pthread_mutex_t *mutexes;
+pthread_cond_t not_full, not_empty;
 FILE *file;
+volatile int finish_work=0;
 
 
 typedef struct{
@@ -33,73 +34,72 @@ typedef struct{
 
 Buffer buf;
 
-void signalHandler(int signo){
+sighandler_t signalHandler(int signo){
     printf("I received signal %s\n",signo == SIGINT ? "SIGINT" : "SIGALRM");
     exit(0);
-}
-
-int produce(Buffer *buf){
-    if(buf ->nelements == buf->size) return -1; //no place to push 
-    if(verbose) printf("I allocate memory\n");
-    char * string = malloc(4096);
-    fgets(string, 4096, file);
-    buf->array[buf->produce_i] = string;
-
-    buf -> produce_i = (buf->produce_i +1) % buf->size;
-    buf ->nelements++;
-    return 0;
-}
-
-int consume(Buffer * buf){
-    if(buf ->nelements == 0) return -1; // no element to pop
-    char* string =  buf->array[consume_i];
-    buf->array[consume_i] = NULL;
-   
-
-    switch(search_mode){
-        case -1:
-            if(strlen(string) < L) printf(MAG,"%i: %s",consume_i,string);
-            break; 
-        case 0:
-            if(strlen(string) == 0) printf(MAG,"%i: %s",consume_i,string); 
-            break;
-        case 1:
-            if(strlen(string) > 0) printf(MAG,"%i: %s",consume_i,string); 
-            break;
-    }
-    free(string);
-    
-    buf->consume_i = (buf->consume_i +1) % buf->size;
-    buf-> nelements--;
-    return 0;
 }
 
 
 void * doProducerWork(void * thread_i){
     int thread_id = (intptr_t) thread_i;
-    pthread_mutex_lock(&buffer[producer_index]);
-    while(getSize(fifo) == QUEUE_SIZE){
-        pthread_cond_wait(&not_full);
+    while(1){
+        pthread_mutex_lock(&buffer[producer_index]);
+        while(buf ->nelements == buf->size){
+            pthread_cond_wait(&not_full);
+        }
+
+        // ------------------- produce -------------------    
+        if(buf ->nelements == buf->size) return -1; //no place to push 
+        if(verbose) printf("I allocate memory\n");
+        char * string = malloc(4096);
+        if(fgets(string, 4096, file) == NULL) return NULL;
+
+        buf->array[buf->produce_i] = string;
+        buf -> produce_i = (buf->produce_i +1) % buf->size;
+        buf ->nelements++;
+         
+        // --------------------------------------------------
+
+        thread_cond_signal(&not_empty);
+        pthread_mutex_unlock();
     }
-    
-    push(fifo);
-
-
-    thread_cond_signal(&not_empty);
-    pthread_mutex_unlock();
 }
 
 void * doConsumerWork(void *thread_i){
     int thread_id = (intptr_t) thread_i;
-    pthread_mutex_lock(&buffer[consument_index]);
-    while(getSize(fifo) == 0){
-        pthread_cond_wait(&not_empty);
+    while(1){
+        pthread_mutex_lock(&buffer[consument_index]);
+        
+        while(buf ->nelements == 0){
+            pthread_cond_wait(&not_empty);
+            if(finish_work) return NULL; 
+        }
+        
+        // ------------------- consume ---------------
+        char* string =  buf->array[consume_i];
+        buf->array[consume_i] = NULL;
+
+        switch(search_mode){
+            case -1:
+                if(strlen(string) < L) printf(MAG,"%i: %s",consume_i,string);
+                break; 
+            case 0:
+                if(strlen(string) == 0) printf(MAG,"%i: %s",consume_i,string); 
+                break;
+            case 1:
+                if(strlen(string) > 0) printf(MAG,"%i: %s",consume_i,string); 
+                break;
+        }
+        free(string);
+        
+        buf->consume_i = (buf->consume_i +1) % buf->size;
+        buf-> nelements--;
+        // -------------------------------------------
+
+        pthread_cond_signal(&not_full);
+        pthread_mutex_unlock();
     }
-    pop(fifo);
 
-
-    pthread_cond_signal(&not_full);
-    pthread_mutex_unlock();
 }
 
 void printInfo(){
@@ -124,7 +124,7 @@ void parseCommandArgs(int argc, char * argv[]){
     buf->produce_i = 0;
     buf->consume_i = 0;
     buf->nelements =0;
-    for(int i=0;i<size;i++){
+    for(int i=0;i<buff->size;i++){
         array[i] = NULL;
     }
 
@@ -135,15 +135,26 @@ void releaseResources(){
     for(int i=0;i<fifo->size;i++){
         pthread_exit()
     }
+
 }
+
 
 int main(int argc, char * argv[]){
     if(atexit(releaseResources)!=0) FAILURE_EXIT("Failed to set atexit function\n");
+    signal(SIGINT,signalHandler);
+    signal(SIGALRM,signalHandler);
+    
     parseCommandArgs(argc,argv);
     if((file = fopen(file_name,"r")) == NULL) FAILURE_EXIT("Opening: %s failed\n",file_name); 
-    pthread_mutex_init()
+    
+    
+    mutexes = calloc(N,sizeof(mutex_t));
+    for(int i=0;i<buff->size;i++){
+        pthread_mutex_init(mutex+i,NULL);
+    }
 
-    mutex = calloc(N, )
+    pthread_cond_init(&not_empty,NULL);
+    pthread_cond_init(&not_full,NULL);
 
     threads = calloc(number_of_threads,sizeof(pthread_t));
     int i;
@@ -158,7 +169,11 @@ int main(int argc, char * argv[]){
 
 
 
-    for(int i=0;i<number_of_threads;i++){
+    for(i=0;i<P;i++){
+        if(pthread_join(threads[i],NULL)!=0) FAILURE_EXIT("Waiting for thread failed\n");
+    }
+    finish_work=1;
+    for(;i<P+K;i++){
         if(pthread_join(threads[i],NULL)!=0) FAILURE_EXIT("Waiting for thread failed\n");
     }
     
