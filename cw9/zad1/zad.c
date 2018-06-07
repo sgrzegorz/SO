@@ -46,32 +46,31 @@ void signalHandler(int signo){
 void * doProducerWork(void * arg){
     
     while(1){
-        WRITE_MSG("!\n");
+       
         pthread_mutex_lock(&mutexes[buf.produce_i]);
-        WRITE_MSG("22222\n");
+       
         while(buf.nelements == N){
-            WRITE_MSG("Why\n");
+           
             pthread_cond_wait(&not_full,&mutexes[buf.produce_i]);
             
         }
-        printf("-1 %ld \n",pthread_self());
+        if(verbose)printf(MAG"PRODUCER %ld takes line from file\n",pthread_self());
         // ------------------- produce ----------------------- 
         
-        printf("!!!!\n");
         char * line = malloc(4096);
         if(fgets(line, 4096, file) == NULL){
             pthread_mutex_unlock(&mutexes[buf.produce_i]);
-            printf("Bye\n");
+            if(verbose)printf(MAG"PRODUCER %ld found EOF\n",pthread_self());
             return NULL;
         } 
-        printf(">> %i %s",buf.nelements,line);
+        
         buf.array[buf.produce_i] = line;
         int previous = buf.produce_i;
         buf.produce_i = (buf.produce_i +1) % N;
         buf.nelements++;
          
         // ----------------------------------------------------
-        printf("+1 %ld \n",pthread_self());
+        if(verbose)printf(MAG"PRODUCER %ld puts line to buf[%i]\n",pthread_self(),previous);
         pthread_cond_signal(&not_empty);
         pthread_mutex_unlock(&mutexes[previous]);
     }
@@ -80,9 +79,9 @@ void * doProducerWork(void * arg){
 void * doConsumerWork(void *arg){
     
     while(1){
-        printf("0\n");
+        
         pthread_mutex_lock(&mutexes[buf.consume_i]);
-        WRITE_MSG("????\n");
+        
         while(buf.nelements == 0){
             pthread_cond_wait(&not_empty,&mutexes[buf.consume_i]);
             if(finish_work){
@@ -90,23 +89,23 @@ void * doConsumerWork(void *arg){
                 return NULL; 
             } 
         }
-        printf("-2 %ld \n",pthread_self());
+        if(verbose)printf(CYN"CONSUMER %ld consumes buf[%i]\n",pthread_self(),buf.consume_i);
         // ------------------- consume ---------------
         char* line =  buf.array[buf.consume_i];
         buf.array[buf.consume_i] = NULL;
 
         switch(search_mode){
             case -1:
-                if(strlen(line) < L) printf("%i: %s",buf.consume_i,line);
+                if(strlen(line) < L) printf(CYN"CONSUMER %ld found: %s",pthread_self(),line);
                 break; 
             case 0:
-                if(strlen(line) == 0) printf("%i: %s",buf.consume_i,line); 
+                if(strlen(line) == 0) printf(CYN"CONSUMER %ld found: %s",pthread_self(),line); 
                 break;
             case 1:
-                if(strlen(line) > 0) printf("%i: %s",buf.consume_i,line); 
+                if(strlen(line) > 0) printf(CYN"CONSUMER %ld found: %s",pthread_self(),line); 
                 break;
         }
-        printf(">>%i %s ",buf.nelements,line);
+        
         free(line);
         
         int previous = buf.consume_i;
@@ -114,7 +113,7 @@ void * doConsumerWork(void *arg){
         buf.nelements--;
         // -------------------------------------------
 
-        printf("+2 %ld \n",pthread_self());
+        if(verbose)printf(CYN"CONSUMER %ld freed buf[%i] \n",pthread_self(),previous);
 
         pthread_cond_signal(&not_full);
         pthread_mutex_unlock(&mutexes[previous]);
@@ -198,12 +197,12 @@ int main(int argc, char * argv[]){
         if(pthread_join(producer_threads[p],NULL)!=0) FAILURE_EXIT("Waiting for producer thread failed: %s\n",strerror(errno));
     }
     finish_work=1;
-    WRITE_MSG("All producents finished their work\n");
+    if(verbose) WRITE_MSG("All producents finished their work\n");
     pthread_cond_broadcast(&not_empty);
     for(int k=0;k<K;k++){
         if(pthread_join(consumer_threads[k],NULL)!=0) FAILURE_EXIT("Waiting for consumer thread failed: %s\n",strerror(errno));
     }
-    WRITE_MSG("All consuments finished their work\n");
+    if(verbose) WRITE_MSG("All consuments finished their work\n");
 
     fclose(file);
 }
