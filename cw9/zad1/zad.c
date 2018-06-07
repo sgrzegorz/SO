@@ -9,7 +9,7 @@
 #include <math.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-
+#define WRITE_MSG(format,...) {char buffer[255];sprintf(buffer,format, ##__VA_ARGS__);write(1, buffer, strlen(buffer));}
 #define _GNU_SOURCE
 #define FAILURE_EXIT(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));exit(-1);}
 #define MAG  "\x1B[35m"
@@ -44,12 +44,14 @@ void signalHandler(int signo){
 
 
 void * doProducerWork(void * arg){
-    printf("!!!!!!!!!!\n");
+    
     while(1){
-        pthread_mutex_lock(&mutexes[1]);
-        printf("22222\n");
+        WRITE_MSG("!\n");
+        pthread_mutex_lock(&mutexes[buf.produce_i]);
+        WRITE_MSG("22222\n");
         while(buf.nelements == N){
-            pthread_cond_wait(&not_full,&mutexes[1]);
+            WRITE_MSG("Why\n");
+            pthread_cond_wait(&not_full,&mutexes[buf.produce_i]);
             
         }
         printf("-1 %ld \n",pthread_self());
@@ -67,7 +69,7 @@ void * doProducerWork(void * arg){
         // ----------------------------------------------------
         printf("+1 %ld \n",pthread_self());
         pthread_cond_signal(&not_empty);
-        pthread_mutex_unlock(&mutexes[1]);
+        pthread_mutex_unlock(&mutexes[previous]);
     }
 }
 
@@ -75,12 +77,12 @@ void * doConsumerWork(void *arg){
     
     while(1){
         printf("0\n");
-        pthread_mutex_lock(&mutexes[0]);
-        printf("????\n");
+        pthread_mutex_lock(&mutexes[buf.consume_i]);
+        WRITE_MSG("????\n");
         while(buf.nelements == 0){
-            pthread_cond_wait(&not_empty,&mutexes[0]);
+            pthread_cond_wait(&not_empty,&mutexes[buf.consume_i]);
             if(finish_work){
-                pthread_mutex_unlock(&mutexes[0]);
+                pthread_mutex_unlock(&mutexes[buf.consume_i]);
                 return NULL; 
             } 
         }
@@ -111,7 +113,7 @@ void * doConsumerWork(void *arg){
         printf("+2 %ld \n",pthread_self());
 
         pthread_cond_signal(&not_full);
-        pthread_mutex_unlock(&mutexes[0]);
+        pthread_mutex_unlock(&mutexes[previous]);
     }
 
 }
