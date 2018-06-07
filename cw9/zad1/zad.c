@@ -47,20 +47,22 @@ void * doProducerWork(void * arg){
     
     while(1){
        
-        pthread_mutex_lock(&mutexes[buf.produce_i]);
+        pthread_mutex_lock(&mutexes[N]);
        
         while(buf.nelements == N){
            
-            pthread_cond_wait(&not_full,&mutexes[buf.produce_i]);
+            pthread_cond_wait(&not_full,&mutexes[N]);
             
         }
-        if(verbose)printf(MAG"PRODUCER %ld takes line from file\n",pthread_self());
-        // ------------------- produce ----------------------- 
         
+        pthread_mutex_unlock(&mutexes[buf.produce_i]);
+        // ------------------- produce ----------------------- 
+        if(verbose)printf(MAG"PRODUCER %ld takes line from file\n",pthread_self());
         char * line = malloc(4096);
         if(fgets(line, 4096, file) == NULL){
             if(verbose)printf(MAG"PRODUCER %ld found EOF\n",pthread_self());
             pthread_mutex_unlock(&mutexes[buf.produce_i]);
+            pthread_mutex_unlock(&mutexes[N]);
             return NULL;
         } 
         
@@ -68,11 +70,12 @@ void * doProducerWork(void * arg){
         int previous = buf.produce_i;
         buf.produce_i = (buf.produce_i +1) % N;
         buf.nelements++;
-         
+         if(verbose)printf(MAG"PRODUCER %ld puts line to buf[%i]\n",pthread_self(),previous);
         // ----------------------------------------------------
-        if(verbose)printf(MAG"PRODUCER %ld puts line to buf[%i]\n",pthread_self(),previous);
-        pthread_cond_signal(&not_empty);
         pthread_mutex_unlock(&mutexes[previous]);
+
+        pthread_cond_signal(&not_empty);
+        pthread_mutex_unlock(&mutexes[N]);
     }
 }
 
@@ -83,14 +86,17 @@ void * doConsumerWork(void *arg){
         pthread_mutex_lock(&mutexes[buf.consume_i]);
         
         while(buf.nelements == 0){
-            pthread_cond_wait(&not_empty,&mutexes[buf.consume_i]);
+            pthread_cond_wait(&not_empty,&mutexes[N+1]);
             if(finish_work){
-                pthread_mutex_unlock(&mutexes[buf.consume_i]);
+                pthread_mutex_unlock(&mutexes[N+1]);
                 return NULL; 
             } 
         }
-        if(verbose)printf(CYN"CONSUMER %ld consumes buf[%i]\n",pthread_self(),buf.consume_i);
+        
+        pthread_mutex_lock(&mutexes[buf.consume_i]);
         // ------------------- consume ---------------
+        if(verbose)printf(CYN"CONSUMER %ld consumes buf[%i]\n",pthread_self(),buf.consume_i);
+       
         char* line =  buf.array[buf.consume_i];
         buf.array[buf.consume_i] = NULL;
 
@@ -111,12 +117,13 @@ void * doConsumerWork(void *arg){
         int previous = buf.consume_i;
         buf.consume_i = (buf.consume_i +1) % N;
         buf.nelements--;
-        // -------------------------------------------
-
         if(verbose)printf(CYN"CONSUMER %ld freed buf[%i] \n",pthread_self(),previous);
+        // -------------------------------------------
+        pthread_mutex_unlock(&mutexes[previous]);
+        
 
         pthread_cond_signal(&not_full);
-        pthread_mutex_unlock(&mutexes[previous]);
+        pthread_mutex_unlock(&mutexes[N+1]);
     }
 
 }
