@@ -74,7 +74,7 @@ void * doProducerWork(void * arg){
 void * doConsumerWork(void *arg){
     
     while(1){
-        
+        printf("0\n");
         pthread_mutex_lock(&mutexes[0]);
         printf("????\n");
         while(buf.nelements == 0){
@@ -165,7 +165,7 @@ int main(int argc, char * argv[]){
     if((file = fopen(file_name,"r")) == NULL) FAILURE_EXIT("Opening: %s failed\n",file_name); 
     
     
-    mutexes = calloc(N,sizeof(pthread_mutex_t));
+    mutexes = (pthread_mutex_t*) calloc(N,sizeof(pthread_mutex_t));
     for(int i=0;i<N;i++){
         pthread_mutex_init(mutexes+i,NULL);
     }
