@@ -57,7 +57,7 @@ void * doProducerWork(void * arg){
         printf("-1 %ld \n",pthread_self());
         // ------------------- produce ----------------------- 
         
-        
+        printf("!!!!\n");
         char * line = malloc(4096);
         if(fgets(line, 4096, file) == NULL) return NULL;
         printf(">> %i %s",buf.nelements,line);
