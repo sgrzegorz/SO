@@ -9,7 +9,7 @@
 #include <math.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#define WRITE_MSG(format,...) {char buffer[255];sprintf(buffer,format, ##__VA_ARGS__);write(1, buffer, strlen(buffer));}
+char buffer[255];
 #define _GNU_SOURCE
 #define FAILURE_EXIT(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));exit(-1);}
 #define MAG  "\x1B[35m"
@@ -59,8 +59,8 @@ void * doProducerWork(void * arg){
         
         char * line = malloc(4096);
         if(fgets(line, 4096, file) == NULL){
-            pthread_mutex_unlock(&mutexes[buf.produce_i]);
             if(verbose)printf(MAG"PRODUCER %ld found EOF\n",pthread_self());
+            pthread_mutex_unlock(&mutexes[buf.produce_i]);
             return NULL;
         } 
         
@@ -151,12 +151,12 @@ void parseCommandArgs(int argc, char * argv[]){
 }
 
 void releaseResources(){
-    for(int p=0;p<P;p++){
-        pthread_cancel(producer_threads[p]);
-    }
-    for(int k=0;k<K;k++){
-        pthread_cancel(producer_threads[k]);
-    }
+    // for(int p=0;p<P;p++){
+    //     if(pthread_cancel(producer_threads[p])!=0) printf("Failed to cancel Pthread\n");
+    // }
+    // for(int k=0;k<K;k++){
+    //     if(pthread_cancel(producer_threads[k])!=0) printf("Failed to cancel Cthread\n");
+    // }
 
 }
 
@@ -197,12 +197,12 @@ int main(int argc, char * argv[]){
         if(pthread_join(producer_threads[p],NULL)!=0) FAILURE_EXIT("Waiting for producer thread failed: %s\n",strerror(errno));
     }
     finish_work=1;
-    if(verbose) WRITE_MSG("All producents finished their work\n");
+    if(verbose) printf("All producents finished their work\n");
     pthread_cond_broadcast(&not_empty);
     for(int k=0;k<K;k++){
         if(pthread_join(consumer_threads[k],NULL)!=0) FAILURE_EXIT("Waiting for consumer thread failed: %s\n",strerror(errno));
     }
-    if(verbose) WRITE_MSG("All consuments finished their work\n");
+    if(verbose) printf("All consuments finished their work\n");
 
     fclose(file);
 }
