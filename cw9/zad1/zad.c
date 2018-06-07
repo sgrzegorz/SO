@@ -53,7 +53,7 @@ void * doProducerWork(void * arg){
             
         }
         printf("-1 %ld \n",pthread_self());
-        // ------------------- produce -------------------    
+        // ------------------- produce ----------------------- 
         
         
         char * line = malloc(4096);
@@ -64,7 +64,7 @@ void * doProducerWork(void * arg){
         buf.produce_i = (buf.produce_i +1) % N;
         buf.nelements++;
          
-        // --------------------------------------------------
+        // ----------------------------------------------------
         printf("+1 %ld \n",pthread_self());
         pthread_cond_signal(&not_empty);
         pthread_mutex_unlock(&mutexes[1]);
