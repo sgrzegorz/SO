@@ -22,8 +22,8 @@ int P, K;
 int N;
 char file_name[40];
 int search_mode,verbose,nk;
-pthread_t *producer_threads,*consumer_threads;
-pthread_mutex_t *mutexes;
+pthread_t *producer_threads=NULL,*consumer_threads=NULL;
+pthread_mutex_t *mutexes=NULL;
 pthread_cond_t not_full, not_empty;
 FILE *file;
 volatile int finish_work=0;
@@ -59,7 +59,11 @@ void * doProducerWork(void * arg){
         
         printf("!!!!\n");
         char * line = malloc(4096);
-        if(fgets(line, 4096, file) == NULL) return NULL;
+        if(fgets(line, 4096, file) == NULL){
+            pthread_mutex_unlock(&mutexes[buf.produce_i]);
+            printf("Bye\n");
+            return NULL;
+        } 
         printf(">> %i %s",buf.nelements,line);
         buf.array[buf.produce_i] = line;
         int previous = buf.produce_i;
@@ -91,17 +95,17 @@ void * doConsumerWork(void *arg){
         char* line =  buf.array[buf.consume_i];
         buf.array[buf.consume_i] = NULL;
 
-        // switch(search_mode){
-        //     case -1:
-        //         if(strlen(line) < L) printf(MAG "%i: %s",buf.consume_i,line);
-        //         break; 
-        //     case 0:
-        //         if(strlen(line) == 0) printf(MAG "%i: %s",buf.consume_i,line); 
-        //         break;
-        //     case 1:
-        //         if(strlen(line) > 0) printf(MAG "%i: %s",buf.consume_i,line); 
-        //         break;
-        // }
+        switch(search_mode){
+            case -1:
+                if(strlen(line) < L) printf("%i: %s",buf.consume_i,line);
+                break; 
+            case 0:
+                if(strlen(line) == 0) printf("%i: %s",buf.consume_i,line); 
+                break;
+            case 1:
+                if(strlen(line) > 0) printf("%i: %s",buf.consume_i,line); 
+                break;
+        }
         printf(">>%i %s ",buf.nelements,line);
         free(line);
         
@@ -143,7 +147,7 @@ void parseCommandArgs(int argc, char * argv[]){
     for(int i=0;i<N;i++){
         buf.array[i] = NULL;
     }
-
+    if(nk < 0) FAILURE_EXIT("Incorrect nk\n");
     fclose(configuration);
 }
 
@@ -178,13 +182,14 @@ int main(int argc, char * argv[]){
     producer_threads = calloc(P,sizeof(pthread_t));
     consumer_threads = calloc(K,sizeof(pthread_t));
 
+    if(nk > 0) alarm(nk);
     for(int p=0;p<P;p++){
         pthread_create(&producer_threads[p],NULL,doProducerWork,NULL);
     }
     for(int k=0;k<K;k++){
         pthread_create(&consumer_threads[k],NULL,doConsumerWork,NULL);  
     }
-    //if(atexit(releaseResources)!=0) FAILURE_EXIT("Failed to set atexit function\n");
+    if(atexit(releaseResources)!=0) FAILURE_EXIT("Failed to set atexit function\n");
    
 
 
@@ -193,10 +198,12 @@ int main(int argc, char * argv[]){
         if(pthread_join(producer_threads[p],NULL)!=0) FAILURE_EXIT("Waiting for producer thread failed: %s\n",strerror(errno));
     }
     finish_work=1;
+    WRITE_MSG("All producents finished their work\n");
+    pthread_cond_broadcast(&not_empty);
     for(int k=0;k<K;k++){
         if(pthread_join(consumer_threads[k],NULL)!=0) FAILURE_EXIT("Waiting for consumer thread failed: %s\n",strerror(errno));
     }
-    
+    WRITE_MSG("All consuments finished their work\n");
 
     fclose(file);
 }
