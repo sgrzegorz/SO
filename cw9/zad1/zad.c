@@ -44,11 +44,13 @@ void signalHandler(int signo){
 
 
 void * doProducerWork(void * arg){
-    
+    printf("!!!!!!!!!!\n");
     while(1){
-        pthread_mutex_lock(&mutexes[buf.produce_i]);
+        pthread_mutex_lock(&mutexes[1]);
+        printf("22222\n");
         while(buf.nelements == N){
-            pthread_cond_wait(&not_full,&mutexes[buf.produce_i]);
+            pthread_cond_wait(&not_full,&mutexes[1]);
+            
         }
         printf("-1 %ld \n",pthread_self());
         // ------------------- produce -------------------    
@@ -56,7 +58,7 @@ void * doProducerWork(void * arg){
         
         char * line = malloc(4096);
         if(fgets(line, 4096, file) == NULL) return NULL;
-        printf(">> %s\n",line);
+        printf(">> %i %s",buf.nelements,line);
         buf.array[buf.produce_i] = line;
         int previous = buf.produce_i;
         buf.produce_i = (buf.produce_i +1) % N;
@@ -65,19 +67,20 @@ void * doProducerWork(void * arg){
         // --------------------------------------------------
         printf("+1 %ld \n",pthread_self());
         pthread_cond_signal(&not_empty);
-        pthread_mutex_unlock(&mutexes[previous]);
+        pthread_mutex_unlock(&mutexes[1]);
     }
 }
 
 void * doConsumerWork(void *arg){
     
     while(1){
-        pthread_mutex_lock(&mutexes[buf.produce_i]);
         
+        pthread_mutex_lock(&mutexes[0]);
+        printf("????\n");
         while(buf.nelements == 0){
-            pthread_cond_wait(&not_empty,&mutexes[buf.produce_i]);
+            pthread_cond_wait(&not_empty,&mutexes[0]);
             if(finish_work){
-                pthread_mutex_unlock(&mutexes[buf.produce_i]);
+                pthread_mutex_unlock(&mutexes[0]);
                 return NULL; 
             } 
         }
@@ -97,7 +100,7 @@ void * doConsumerWork(void *arg){
         //         if(strlen(line) > 0) printf(MAG "%i: %s",buf.consume_i,line); 
         //         break;
         // }
-        printf(">> %s",line);
+        printf(">>%i %s ",buf.nelements,line);
         free(line);
         
         int previous = buf.consume_i;
@@ -108,7 +111,7 @@ void * doConsumerWork(void *arg){
         printf("+2 %ld \n",pthread_self());
 
         pthread_cond_signal(&not_full);
-        pthread_mutex_unlock(&mutexes[previous]);
+        pthread_mutex_unlock(&mutexes[0]);
     }
 
 }
@@ -180,7 +183,7 @@ int main(int argc, char * argv[]){
         pthread_create(&consumer_threads[k],NULL,doConsumerWork,NULL);  
     }
     //if(atexit(releaseResources)!=0) FAILURE_EXIT("Failed to set atexit function\n");
-    printf("2\n");
+   
 
 
 
