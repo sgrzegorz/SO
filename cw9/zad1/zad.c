@@ -69,7 +69,11 @@ void * doProducerWork(void * arg){
             pthread_cond_signal(&not_empty);
             pthread_mutex_unlock(&mutexes[buf.produce_i]);
             pthread_mutex_unlock(&mutexes[N]);
-            return NULL;
+            if(nk==0){
+                return NULL;
+            }else{
+                while(1){};
+            }
         } 
         
         
@@ -92,7 +96,7 @@ void * doConsumerWork(void *arg){
         
         pthread_mutex_lock(&mutexes[N+1]);
         
-        while(buf.nelements == 0){
+        while(buf.nelements == 0 || buf.array[buf.consume_i] ==NULL){
             pthread_cond_wait(&not_empty,&mutexes[N+1]);
             if(finish_work){
                 pthread_mutex_unlock(&mutexes[N+1]);
@@ -103,23 +107,22 @@ void * doConsumerWork(void *arg){
         pthread_mutex_lock(&mutexes[buf.consume_i]);
         // ------------------- consume ---------------
         if(verbose)printf(CYN"CONSUMER %ld consumes buf[%i]\n",pthread_self(),buf.consume_i);
-       
-       
+        
+        char *line = buf.array[buf.consume_i];
         buf.array[buf.consume_i] = NULL;
-        long int k = strlen(buf.array[buf.consume_i]);
+        
 
-
-        // switch(search_mode){
-        //     case -1:
-        //         if(strlen(line) < L) printf(CYN"CONSUMER %ld found: %s",pthread_self(),line);
-        //         break; 
-        //     case 0:
-        //         if(strlen(line) == 0) printf(CYN"CONSUMER %ld found: %s",pthread_self(),line); 
-        //         break;
-        //     case 1:
-        //         if(strlen(line) > 0) printf(CYN"CONSUMER %ld found: %s",pthread_self(),line); 
-        //         break;
-        // }
+        switch(search_mode){
+            case -1:
+                if(strlen(line) < L) printf(CYN"CONSUMER %ld found: %s",pthread_self(),line);
+                break; 
+            case 0:
+                if(strlen(line) == 0) printf(CYN"CONSUMER %ld found: %s",pthread_self(),line); 
+                break;
+            case 1:
+                if(strlen(line) > 0) printf(CYN"CONSUMER %ld found: %s",pthread_self(),line); 
+                break;
+        }
         
         free(line);
          
