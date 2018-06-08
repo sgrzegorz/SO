@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <math.h>
 #include <sys/time.h>
+#include <semaphore.h>
 #include <sys/resource.h>
 char buffer[255];
 #define _GNU_SOURCE
@@ -25,7 +26,9 @@ int N;
 char file_name[40];
 int search_mode,verbose,nk;
 pthread_t *producer_threads=NULL,*consumer_threads=NULL;
-pthread_mutex_t *mutexes=NULL;
+sem_t  *semaphores=NULL;
+sem_t emptyCount, fillCount, produce, consume;
+
 pthread_cond_t not_full, not_empty;
 FILE *file;
 volatile int finish_work=0;
@@ -49,44 +52,34 @@ void * doProducerWork(void * arg){
     
     while(1){
        
-        pthread_mutex_lock(&mutexes[N]);
-
-        while(buf.nelements == N){
-           
-            pthread_cond_wait(&not_full,&mutexes[N]);
-            
-        }
-        
-        pthread_mutex_lock(&mutexes[buf.produce_i]);
-        // ------------------- produce ----------------------- 
-        if(verbose)printf(MAG"PRODUCER %ld takes line from file\n",pthread_self());
+        // ------------------- produce --------------------------
+        if(verbose)WRITE(MAG"PRODUCER %ld takes line from file\n",pthread_self());
         char * line = malloc(256);
         if(fgets(line, 256, file) == NULL){
             end=1;
-            if(verbose)printf(MAG"PRODUCER %ld found EOF\n",pthread_self());
-            
-            pthread_cond_signal(&not_full);
-            pthread_cond_signal(&not_empty);
-            pthread_mutex_unlock(&mutexes[buf.produce_i]);
-            pthread_mutex_unlock(&mutexes[N]);
+            if(verbose)WRITE(MAG"PRODUCER %ld found EOF\n",pthread_self());
             if(nk==0){
                 return NULL;
             }else{
                 while(1){};
             }
         } 
-        
-        
+        //-----------------------end produce------------------------
+    
+
+        sem_wait(&emptyCount);
+        sem_wait(&semaphores[buf.produce_i]);
+        // ------------------put item into buffer ------------------------------
         buf.array[buf.produce_i] = line;
         int previous = buf.produce_i;
         buf.produce_i = (buf.produce_i +1) % N;
         buf.nelements++;
-        if(verbose)printf(MAG"PRODUCER %ld puts line to buf[%i]\n",pthread_self(),previous);
-        // ----------------------------------------------------
-        pthread_mutex_unlock(&mutexes[previous]);
+        if(verbose)WRITE(MAG"PRODUCER %ld puts line to buf[%i]\n",pthread_self(),previous);
+        // -----------------end put item into buffer-----------------------------
+        sem_post(&semaphores[previous]);
+        sem_post(&fillCount);
+        
 
-        pthread_cond_signal(&not_empty);
-        pthread_mutex_unlock(&mutexes[N]);
     }
 }
 
@@ -94,49 +87,47 @@ void * doConsumerWork(void *arg){
     
     while(1){
         
-        pthread_mutex_lock(&mutexes[N+1]);
-        
-        while(buf.nelements == 0 || buf.array[buf.consume_i] ==NULL){
-            pthread_cond_wait(&not_empty,&mutexes[N+1]);
-            if(finish_work){
-                pthread_mutex_unlock(&mutexes[N+1]);
-                return NULL; 
-            } 
-        }
-        
-        pthread_mutex_lock(&mutexes[buf.consume_i]);
-        // ------------------- consume ---------------
-        if(verbose)printf(CYN"CONSUMER %ld consumes buf[%i]\n",pthread_self(),buf.consume_i);
-        
+        sem_wait(&fillCount);
+        sem_wait(&semaphores[buf.consume_i]);
+        // ------------------- remove item from buffer -------------------------------
         char *line = buf.array[buf.consume_i];
         buf.array[buf.consume_i] = NULL;
-        
 
-        switch(search_mode){
-            case -1:
-                if(strlen(line) < L) printf(CYN"CONSUMER %ld found: %s",pthread_self(),line);
-                break; 
-            case 0:
-                if(strlen(line) == 0) printf(CYN"CONSUMER %ld found: %s",pthread_self(),line); 
-                break;
-            case 1:
-                if(strlen(line) > 0) printf(CYN"CONSUMER %ld found: %s",pthread_self(),line); 
-                break;
-        }
-        
-        free(line);
-         
         int previous = buf.consume_i;
         buf.consume_i = (buf.consume_i +1) % N;
         buf.nelements--;
-        
-        if(verbose)printf(CYN"CONSUMER %ld freed buf[%i] \n",pthread_self(),previous);
-        // -------------------------------------------
-        pthread_mutex_unlock(&mutexes[previous]);
-       // printf("qqqqqqqqqqqqqqqqqqqqqqq\n");
+        if(verbose)WRITE(CYN"CONSUMER %ld freed buf[%i] \n",pthread_self(),previous);
 
-        pthread_cond_signal(&not_full);
-        pthread_mutex_unlock(&mutexes[N+1]);
+        //-------------------- end remove item from buffer ---------------------------
+        sem_post(&semaphores[previous]);
+        sem_post(&emptyCount);
+
+
+
+       
+        //----------------------       consume item ----------------------------------------        
+        if(verbose) printf(CYN"CONSUMER %ld consumes buf[%i]\n",pthread_self(),buf.consume_i);
+        if(line ==NULL){
+            //WRITE("Nothing\n");
+           
+        }else{
+            switch(search_mode){
+                case -1:
+                    if(strlen(line) < L) WRITE(CYN"CONSUMER %ld found: %s",pthread_self(),line);
+                    break; 
+                case 0:
+                    if(strlen(line) == 0) WRITE(CYN"CONSUMER %ld found: %s",pthread_self(),line); 
+                    break;
+                case 1:
+                    if(strlen(line) > 0) WRITE(CYN"CONSUMER %ld found: %s",pthread_self(),line); 
+                    break;
+            }
+            free(line);
+           
+        }
+
+        //------------------------------end consume ---------------------------------    
+        
     }
 
 }
@@ -190,10 +181,15 @@ int main(int argc, char * argv[]){
     if((file = fopen(file_name,"r")) == NULL) FAILURE_EXIT("Opening: %s failed\n",file_name); 
     
     
-    mutexes = (pthread_mutex_t*) calloc(N+2,sizeof(pthread_mutex_t));
-    for(int i=0;i<N+2;i++){
-        pthread_mutex_init(mutexes+i,NULL);
+    semaphores = (sem_t *) calloc(N,sizeof(sem_t));
+    for(int i=0;i<N;i++){
+        sem_init(&semaphores[i],0,1);
     }
+    sem_init(&emptyCount,0,1);
+    sem_init(&fillCount,0,1);
+    sem_init(&produce,0,1);
+    sem_init(&consume,0,1);
+    
 
     pthread_cond_init(&not_empty,NULL);
     pthread_cond_init(&not_full,NULL);
@@ -218,6 +214,8 @@ int main(int argc, char * argv[]){
     }
     finish_work=1;
     if(verbose) WRITE("All producents finished their work\n");
+    if(verbose) WRITE("All consuments finished their work\n");
+    exit(0);
     pthread_cond_broadcast(&not_empty);
     for(int k=0;k<K;k++){
         if(pthread_join(consumer_threads[k],NULL)!=0) FAILURE_EXIT("Waiting for consumer thread failed: %s\n",strerror(errno));
