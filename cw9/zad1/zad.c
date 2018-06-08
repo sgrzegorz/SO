@@ -104,10 +104,10 @@ void * doConsumerWork(void *arg){
         // ------------------- consume ---------------
         if(verbose)printf(CYN"CONSUMER %ld consumes buf[%i]\n",pthread_self(),buf.consume_i);
        
-        char* line =  buf.array[buf.consume_i];
-        buf.array[buf.consume_i] = NULL;
-        printf("%ld\n",strlen(line));
        
+        buf.array[buf.consume_i] = NULL;
+        long int k = strlen(buf.array[buf.consume_i]);
+
 
         // switch(search_mode){
         //     case -1:
