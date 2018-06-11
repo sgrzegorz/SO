@@ -11,6 +11,13 @@
 #include <errno.h>
 #include <signal.h>
 
+typedef struct{
+    int type;
+    int arg1;
+    int arg2;
+}Msg;
+
+enum operation{MUL,ADD,DIV,SUB,NAME_ALREADY_USED,};
 
 
 #define WRITE(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
