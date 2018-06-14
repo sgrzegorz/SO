@@ -13,7 +13,12 @@ void __del__(){
     close(socket_fd);
 }
 
+void sigintHandler(){
+    exit(0);
+}
+
 void __init__(){
+    signal(SIGINT,sigintHandler);
     int res;
     socket_fd = socket(AF_INET, SOCK_STREAM,0);
     if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
@@ -43,12 +48,49 @@ void __init__(){
 int main(){
     __init__();
 
+    while(1){
+        Msg msg;
+        Msg feedback;
+        read(socket_fd,&msg,sizeof(Msg));
+        WRITE("Msg received\n");
+        switch(msg.type){
+            case MUL:
+                feedback.type = RESULT;
+                feedback.result = msg.arg1 * msg.arg2;
+                write(socket_fd,&feedback,sizeof(feedback));
+                break;
+            case ADD:
+                feedback.type = RESULT;
+                feedback.result = msg.arg1 + msg.arg2;
+                write(socket_fd,&feedback,sizeof(feedback));
+                break;
 
-    Msg msg;
-    msg.type = MUL;
-    msg.arg1 = 1;
-    msg.arg2 = 4;
-    write(socket_fd,&msg,sizeof(Msg));
+            case DIV:
+                feedback.type = RESULT;
+                feedback.result = msg.arg1 / msg.arg2;
+                write(socket_fd,&feedback,sizeof(feedback));
+                break;
+
+            case SUB:
+                feedback.type = RESULT;
+                feedback.result = msg.arg1 - msg.arg2;
+                write(socket_fd,&feedback,sizeof(feedback));
+                break;
+
+            case KILL_CLIENT:
+                exit(0);
+                break;
+
+            case PING:
+                feedback.type = PONG;
+                write(socket_fd,&feedback,sizeof(feedback));
+                break;
+            default:
+                WRITE("Unknown message type\n");
+        }
+    }
+
+   
     
     
     WRITE("Hej \n");

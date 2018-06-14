@@ -9,9 +9,12 @@ typedef struct{
     int is_active;
     int fd;
     char name[MAX_ARRAY];
+    int ponged;
 }Client;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
+pthread_mutex_t ping_mutex = PTHREAD_MUTEX_INITIALIZER; 
+
 
 Client client[MAX_CLIENTS];
 int nclients=0;
@@ -37,35 +40,62 @@ void signalHandler(){
 
 ///etc/init.d/networking restart
 
-void removeClient(){
-
-}
 
 
 
 int main(int argc, char*argv[]){
     __init__(argc,argv);
-    pthread_create(&threads[0],NULL,handleTerminal,NULL);
 
     printf("Server starts loop.\n");
 
     while(1){
         // struct epoll_event event;
+        pthread_mutex_lock(&ping_mutex);
         struct epoll_event event;
         int nfd = epoll_wait(epoll,&event,1,-1);
-
-        
 
         if(event.data.fd == server_fd){
             registerClient();
         }else{
-            WRITE("me:\n")
             receiveMessage(event.data.fd);
         }
+        pthread_mutex_unlock(&ping_mutex);
        
     }
     close(server_fd);
 
+}
+
+void *pingClients(void * arg){
+    while(1){
+
+        pthread_mutex_lock(&ping_mutex);
+        for(int i=0;i<MAX_CLIENTS;i++){
+            if(client[i].is_active){
+                client[i].ponged =0;
+                Msg msg;
+                msg.type =PING;
+                write(client[i].fd,&msg,sizeof(Msg));
+            }
+        }
+        pthread_mutex_unlock(&ping_mutex);
+
+        sleep(5);
+        
+        pthread_mutex_lock(&ping_mutex);        
+        for(int i=0;i<MAX_CLIENTS;i++){
+            if(client[i].is_active && client[i].ponged ==0){
+                Msg msg;
+                msg.type = KILL_CLIENT;
+                write(client[i].fd,&msg,sizeof(Msg));
+                client[i].is_active = 0;
+                close(client[i].fd);
+            }
+        }
+        pthread_mutex_unlock(&ping_mutex);
+
+    }
+    
 }
 
 
@@ -74,7 +104,6 @@ void receiveMessage(int fd){
     read(fd,&msg,sizeof(Msg));
     switch(msg.type){
         case UNREGISTER:
-
             pthread_mutex_lock(&mutex);
             int flag =0;
             for(int i=0;i<MAX_CLIENTS;i++){
@@ -82,6 +111,7 @@ void receiveMessage(int fd){
                     client[i].is_active =0;
                     flag=1;
                     nclients--;
+                     if(epoll_ctl(epoll,EPOLL_CTL_DEL,client[i].fd,0)== -1) FAILURE_EXIT("Failed to delete client on epoll: %s\n",strerror(errno));
                     break;
                 }
             }
@@ -94,27 +124,39 @@ void receiveMessage(int fd){
             break;
         case RESULT:
             WRITE("result: %i\n",msg.result);
-
             break;
+
+        case PONG:
+            pthread_mutex_lock(&mutex);
+            for(int i=0;i<MAX_CLIENTS;i++){
+                if(client[i].is_active && client[i].fd == fd){
+                    client[i].ponged =1;
+                    break;
+                }
+            }
+            pthread_mutex_unlock(&mutex);
+            break;
+
         default:
-            WRITE("Unknown msg type\n");
+            WRITE("Jak sie ciesze ze nie ma wiecej zestawow\n");
     }
-    printf("%i %i\n",msg.arg1,msg.arg2);
+    
 }
 
 
 void registerClient(){
     int new_client = accept(server_fd,NULL,NULL);
-    WRITE("New client: %i registered\n",new_client);
+    
 
     pthread_mutex_lock(&mutex);
     int client_registered_successfully = 0;
     for(int i=0;i<MAX_CLIENTS;i++){
-        if(client[i].is_active = 0){
+        if(client[i].is_active == 0){
             client[i].fd = new_client;
             client[i].is_active=1;
+            client[i].ponged=1;
             nclients++;
-            WRITE("Client registered successfully\n");
+            WRITE("Client registered %s successfully\n",client[i].name);
             client_registered_successfully=1;
             break;
         }   
@@ -216,6 +258,8 @@ void __init__(int argc, char*argv[]){
     event.data.fd = server_fd;
     if(epoll_ctl(epoll,EPOLL_CTL_ADD,server_fd,&event)== -1) FAILURE_EXIT("Failed to register server_fd file descriptor on epoll instance:   %s\n",strerror(errno));
 
+    pthread_create(&threads[0],NULL,handleTerminal,NULL);
+    pthread_create(&threads[1],NULL,pingClients,NULL);
 }
 
 
@@ -223,6 +267,11 @@ void __del__(){
     if(shutdown(server_fd,SHUT_RDWR)) printf("Atexit failed to shutdown server_fd: %s\n",strerror(errno));
     close(server_fd);
     for(int i=0;i<MAX_CLIENTS;i++){
-        if(client[i].is_active) close(client[i].fd);
+        if(client[i].is_active){
+            Msg msg;
+            msg.type = KILL_CLIENT;
+            write(client[i].fd,&msg,sizeof(Msg));
+             close(client[i].fd);
+        }
     }
 }
