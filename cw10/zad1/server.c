@@ -143,6 +143,9 @@ void receiveMessage(int fd){
     
 }
 
+void acceptClient(){
+
+}
 
 void registerClient(Msg msg){
     int new_client = accept(server_fd,NULL,NULL);
@@ -151,6 +154,8 @@ void registerClient(Msg msg){
     pthread_mutex_lock(&mutex);
     for(int i=0;i<MAX_CLIENTS;i++){
         if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
+            WRITE("%s\n",client[i].name);
+            WRITE("%s\n",msg.name);
             Msg feedback;
             feedback.type = KILL_CLIENT;
             write(new_client,&feedback,sizeof(feedback));
