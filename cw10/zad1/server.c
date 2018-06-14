@@ -16,7 +16,8 @@ Client client[MAX_CLIENTS];
 int nclients=0;
 
 //file descriptors
-int server_socket, client_socket, epoll;
+int server_fd, client_fd, epoll;
+struct sockaddr_in server_addr;
 
 pthread_t threads[3];
 
@@ -54,7 +55,7 @@ int main(int argc, char*argv[]){
 
         
 
-        if(event.data.fd == server_socket){
+        if(event.data.fd == server_fd){
             registerClient();
         }else{
             WRITE_MSG("me:\n")
@@ -62,7 +63,7 @@ int main(int argc, char*argv[]){
         }
        
     }
-    close(server_socket);
+    close(server_fd);
 
 }
 
@@ -75,7 +76,7 @@ void receiveMessage(int fd){
 
 
 void registerClient(){
-    int new_client = accept(server_socket,NULL,NULL);
+    int new_client = accept(server_fd,NULL,NULL);
     WRITE_MSG("New client: %i registered\n",new_client);
 
     pthread_mutex_lock(&mutex);
@@ -155,37 +156,44 @@ void __init__(int argc, char*argv[]){
     atexit(__del__);
     srand(time(NULL));
     
-    server_socket = socket(AF_INET, SOCK_STREAM,0);
-    if(server_socket == -1)  FAILURE_EXIT("Failed to create communication endpoint\n");
+        signal(SIGINT,signalHandler);
+    atexit(__del__);
+    srand(time(NULL));
+    
+    server_fd = socket(AF_INET, SOCK_STREAM,0);
+    if(server_fd == -1)  FAILURE_EXIT("Failed to create communication endpoint\n");
 
-    struct sockaddr_in address;
-    memset(&address, 0, sizeof(address));
+    int yes=1;
+    if (setsockopt(server_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+        FAILURE_EXIT("setsockopt");
+    }
+    
 
-    address.sin_family = AF_INET;
-    address.sin_port = htons(9991);
-    address.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    int tr =1;
-   // if (setsockopt(server_socket,SOL_SOCKET,SO_REUSEADDR,&tr,sizeof(int)) == -1) FAILURE_EXIT("Dekete address alreadin use\n");
+    memset(&server_addr,'\0',sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(9992);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    
        
-    if(bind(server_socket,(const struct sockaddr*) &address,sizeof(address)) == -1) FAILURE_EXIT("Failed to assign address to a socket: %s\n",strerror(errno));
+    if(bind(server_fd,(const struct sockaddr*) &server_addr,sizeof(struct sockaddr)) == -1) FAILURE_EXIT("Failed to assign server_addr to a socket: %s\n",strerror(errno));
 
-    if(listen(server_socket,100) == -1) FAILURE_EXIT("Failed to mark server_socket as a passive socket\n");
+    if(listen(server_fd,100) == -1) FAILURE_EXIT("Failed to mark server_fd as a passive socket\n");
+    
 
     epoll = epoll_create1(0);
     if(epoll == -1) FAILURE_EXIT("Failed to create new epoll instance: %s\n",strerror(errno));
 
     struct epoll_event event;
     event.events = EPOLLIN;
-    event.data.fd = server_socket;
-    if(epoll_ctl(epoll,EPOLL_CTL_ADD,server_socket,&event)== -1) FAILURE_EXIT("Failed to register server_socket file descriptor on epoll instance:   %s\n",strerror(errno));
+    event.data.fd = server_fd;
+    if(epoll_ctl(epoll,EPOLL_CTL_ADD,server_fd,&event)== -1) FAILURE_EXIT("Failed to register server_fd file descriptor on epoll instance:   %s\n",strerror(errno));
 
 }
 
 
 void __del__(){
-    if(shutdown(server_socket,SHUT_RDWR)) printf("Atexit failed to shutdown server_socket: %s\n",strerror(errno));
-    close(server_socket);
+    if(shutdown(server_fd,SHUT_RDWR)) printf("Atexit failed to shutdown server_fd: %s\n",strerror(errno));
+    close(server_fd);
     for(int i=0;i<MAX_CLIENTS;i++){
         if(client[i].is_active) close(client[i].fd);
     }
