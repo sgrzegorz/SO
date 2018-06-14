@@ -43,7 +43,7 @@ void signalHandler(){
 
 
 
-int main(int argc, char*argv[]){
+int main(int argc, char *argv[]){
     __init__(argc,argv);
 
     printf("Server starts loop.\n");
@@ -120,7 +120,7 @@ void receiveMessage(int fd){
             pthread_mutex_unlock(&mutex);
             break;
         case REGISTER:
-            registerClient();
+            registerClient(msg);
             break;
         case RESULT:
             WRITE("result: %i\n",msg.result);
@@ -144,11 +144,21 @@ void receiveMessage(int fd){
 }
 
 
-void registerClient(){
+void registerClient(Msg msg){
     int new_client = accept(server_fd,NULL,NULL);
     
 
     pthread_mutex_lock(&mutex);
+    for(int i=0;i<MAX_CLIENTS;i++){
+        if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
+            Msg feedback;
+            feedback.type = KILL_CLIENT;
+            write(new_client,&feedback,sizeof(feedback));
+            WRITE("Client name exists\n");
+            return;
+        }
+    }
+
     int client_registered_successfully = 0;
     for(int i=0;i<MAX_CLIENTS;i++){
         if(client[i].is_active == 0){
@@ -221,7 +231,7 @@ void *handleTerminal(void * arg){
     }
 }
 
-void __init__(int argc, char*argv[]){
+void __init__(int argc, char *argv[]){
     signal(SIGINT,signalHandler);
     atexit(__del__);
     srand(time(NULL));
