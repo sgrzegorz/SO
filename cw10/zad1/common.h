@@ -17,7 +17,7 @@ typedef struct{
     int arg2;
 }Msg;
 
-enum operation{MUL,ADD,DIV,SUB,NAME_ALREADY_USED,};
+enum operation{MUL=0,ADD,DIV,SUB,NAME_ALREADY_USED,RESULT};
 
 
 #define WRITE(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
