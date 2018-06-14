@@ -3,11 +3,12 @@
 #define MAX_EVENTS 10
 #define MAX_CLIENTS 4096
 
-#define WRITE_MSG(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
+#define WRITE(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 
 typedef struct{
     int is_active;
     int fd;
+    char name[MAX_ARRAY];
 }Client;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
@@ -58,7 +59,7 @@ int main(int argc, char*argv[]){
         if(event.data.fd == server_fd){
             registerClient();
         }else{
-            WRITE_MSG("me:\n")
+            WRITE("me:\n")
             receiveMessage(event.data.fd);
         }
        
@@ -71,13 +72,40 @@ int main(int argc, char*argv[]){
 void receiveMessage(int fd){
     Msg msg;
     read(fd,&msg,sizeof(Msg));
+    switch(msg.type){
+        case UNREGISTER:
+
+            pthread_mutex_lock(&mutex);
+            int flag =0;
+            for(int i=0;i<MAX_CLIENTS;i++){
+                if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
+                    client[i].is_active =0;
+                    flag=1;
+                    nclients--;
+                    break;
+                }
+            }
+            if(!flag) FAILURE_EXIT("Client couldn't unregister magic???\n");
+
+            pthread_mutex_unlock(&mutex);
+            break;
+        case REGISTER:
+            registerClient();
+            break;
+        case RESULT:
+            WRITE("result: %i\n",msg.result);
+
+            break;
+        default:
+            WRITE("Unknown msg type\n");
+    }
     printf("%i %i\n",msg.arg1,msg.arg2);
 }
 
 
 void registerClient(){
     int new_client = accept(server_fd,NULL,NULL);
-    WRITE_MSG("New client: %i registered\n",new_client);
+    WRITE("New client: %i registered\n",new_client);
 
     pthread_mutex_lock(&mutex);
     int client_registered_successfully = 0;
@@ -86,12 +114,12 @@ void registerClient(){
             client[i].fd = new_client;
             client[i].is_active=1;
             nclients++;
-            WRITE_MSG("Client registered successfully\n");
+            WRITE("Client registered successfully\n");
             client_registered_successfully=1;
             break;
         }   
     }
-    if(!client_registered_successfully) WRITE_MSG("Client wasn't registered\n");
+    if(!client_registered_successfully) WRITE("Client wasn't registered\n");
     pthread_mutex_unlock(&mutex);
 
     struct epoll_event event;
@@ -124,13 +152,13 @@ void *handleTerminal(void * arg){
                 msg.type = MUL;
                 break;
             default:
-                WRITE_MSG("unknown command\n");     
+                WRITE("unknown command\n");     
         }
         
         pthread_mutex_lock(&mutex);
 
         if(nclients == 0){
-            WRITE_MSG("No clients registered...\n"); 
+            WRITE("No clients registered...\n"); 
             pthread_mutex_unlock(&mutex);
             continue;
         } 

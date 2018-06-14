@@ -10,14 +10,17 @@
 #include <sys/epoll.h>
 #include <errno.h>
 #include <signal.h>
+#define MAX_ARRAY 50
 
 typedef struct{
     int type;
     int arg1;
     int arg2;
+    int result;
+    char name[MAX_ARRAY];
 }Msg;
 
-enum operation{MUL=0,ADD,DIV,SUB,NAME_ALREADY_USED,RESULT};
+enum operation{MUL=0,ADD,DIV,SUB,NAME_ALREADY_USED,RESULT,UNREGISTER,REGISTER};
 
 
 #define WRITE(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}

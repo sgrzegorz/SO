@@ -1,31 +1,22 @@
 #include "common.h"
 
 int socket_fd;
-
+char name[MAX_ARRAY]= "ala111";
 
 
 void __del__(){
+    Msg msg;
+    msg.type = UNREGISTER;
+    strcpy(msg.name,name);
+    write(socket_fd,&msg,sizeof(Msg));
     if(shutdown(socket_fd,SHUT_RDWR)) printf("Atexit failed to shutdown socket_fd\n");
     close(socket_fd);
 }
 
 void __init__(){
-    atexit(__del__);
-}
-
-
-
-
-int main(){
-    __init__();
-
     int res;
-    atexit(__del__);
-
     socket_fd = socket(AF_INET, SOCK_STREAM,0);
     if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
-
-  
 
     uint32_t ip = inet_addr("94.254.145.105"); // this code I get when I type "what is my ip?" in internet
     if(ip == -1) FAILURE_EXIT("Failed to convert ip address: %s\n",strerror(errno));
@@ -39,10 +30,18 @@ int main(){
     address.sin_addr.s_addr = htonl(INADDR_ANY);
     address.sin_port = port_number;
     
-   
-    printf("Here code stops...\n");
     res = connect(socket_fd,(const struct sockaddr*) &address, sizeof(address));
     if(res == -1) FAILURE_EXIT("Failed in connecting to server_socket: %s\n",strerror(errno));
+
+
+    atexit(__del__);
+}
+
+
+
+
+int main(){
+    __init__();
 
 
     Msg msg;
@@ -54,7 +53,7 @@ int main(){
     
     WRITE("Hej \n");
     while(1){
-        
+
     }
     
 
