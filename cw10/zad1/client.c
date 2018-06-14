@@ -17,9 +17,10 @@ void __init__(){
 
 
 int main(){
+    int result;
     __init__();
 
-    client_socket = socket(AF_INET, SOCK_STREAM,0);
+    client_socket = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK,0);
     if(client_socket == -1) FAILURE_EXIT("Failed to create client socket\n");
 
     uint32_t ip = inet_addr("94.254.145.105");
@@ -33,7 +34,8 @@ int main(){
     address.sin_addr.s_addr = htonl(ip);
    
     WRITE("1\n");
-    if(connect(client_socket,(const struct sockaddr*) &address, sizeof(address)) == -1) FAILURE_EXIT("Failed in connecting to server_socket: %s\n",strerror(errno));
+    res = connect(client_socket,( struct sockaddr*) &address, sizeof(address)) == -1) 
+    if(result == -1) FAILURE_EXIT("Failed in connecting to server_socket: %s\n",strerror(errno));
     WRITE("2\n");
 
     Msg msg;
