@@ -55,7 +55,11 @@ int main(int argc, char *argv[]){
         int nfd = epoll_wait(epoll,&event,1,-1);
 
         if(event.data.fd == server_fd){
-            registerClient();
+            int new_client = accept(server_fd,NULL,NULL);
+            struct epoll_event event;
+            event.events = EPOLLIN;
+            event.data.fd = new_client;
+            if(epoll_ctl(epoll,EPOLL_CTL_ADD,new_client,&event)== -1) FAILURE_EXIT("Failed to register client on epoll: %s\n",strerror(errno));
         }else{
             receiveMessage(event.data.fd);
         }
@@ -107,6 +111,7 @@ void receiveMessage(int fd){
             pthread_mutex_lock(&mutex);
             int flag =0;
             for(int i=0;i<MAX_CLIENTS;i++){
+                
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
                     client[i].is_active =0;
                     flag=1;
@@ -120,7 +125,35 @@ void receiveMessage(int fd){
             pthread_mutex_unlock(&mutex);
             break;
         case REGISTER:
-            registerClient(msg);
+
+            pthread_mutex_lock(&mutex);
+            for(int i=0;i<MAX_CLIENTS;i++){
+                if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
+                    Msg feedback;
+                    feedback.type = KILL_CLIENT;
+                    write(fd,&feedback,sizeof(feedback));
+                    WRITE("Client name exists\n");
+                    return;
+                }
+            }
+
+            int client_registered_successfully = 0;
+            for(int i=0;i<MAX_CLIENTS;i++){
+                if(client[i].is_active == 0){
+                    client[i].fd = fd;
+                    WRITE("%s\n",client[i].name);
+                    WRITE("%s\n",msg.name);
+                    client[i].is_active=1;
+                    client[i].ponged=1;
+                    nclients++;
+                    WRITE("Client registered %s successfully\n",client[i].name);
+                    client_registered_successfully=1;
+                    break;
+                }   
+            }
+            if(!client_registered_successfully) WRITE("Client wasn't registered\n");
+            pthread_mutex_unlock(&mutex);
+
             break;
         case RESULT:
             WRITE("result: %i\n",msg.result);
@@ -143,48 +176,6 @@ void receiveMessage(int fd){
     
 }
 
-void acceptClient(){
-
-}
-
-void registerClient(Msg msg){
-    int new_client = accept(server_fd,NULL,NULL);
-    
-
-    pthread_mutex_lock(&mutex);
-    for(int i=0;i<MAX_CLIENTS;i++){
-        if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
-            WRITE("%s\n",client[i].name);
-            WRITE("%s\n",msg.name);
-            Msg feedback;
-            feedback.type = KILL_CLIENT;
-            write(new_client,&feedback,sizeof(feedback));
-            WRITE("Client name exists\n");
-            return;
-        }
-    }
-
-    int client_registered_successfully = 0;
-    for(int i=0;i<MAX_CLIENTS;i++){
-        if(client[i].is_active == 0){
-            client[i].fd = new_client;
-            client[i].is_active=1;
-            client[i].ponged=1;
-            nclients++;
-            WRITE("Client registered %s successfully\n",client[i].name);
-            client_registered_successfully=1;
-            break;
-        }   
-    }
-    if(!client_registered_successfully) WRITE("Client wasn't registered\n");
-    pthread_mutex_unlock(&mutex);
-
-    struct epoll_event event;
-    event.events = EPOLLIN;
-    event.data.fd = new_client;
-    if(epoll_ctl(epoll,EPOLL_CTL_ADD,new_client,&event)== -1) FAILURE_EXIT("Failed to register client on epoll: %s\n",strerror(errno));
-
-}
 
 
 void *handleTerminal(void * arg){

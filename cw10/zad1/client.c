@@ -74,6 +74,10 @@ void __init__(int argc, char *argv[]){
 int main(int argc, char *argv[]){
     __init__(argc, argv);
 
+    Msg msg;
+    msg.type = REGISTER;
+    write(socket_fd,&msg,sizeof(Msg));
+
     while(1){
         Msg msg;
         Msg feedback;
