@@ -23,9 +23,9 @@ void registerOnServer(){
 
     switch(feedback.type){
         case(KILL_CLIENT):
-            WRITE("!\n");
+            
             if(shutdown(socket_fd,SHUT_RDWR)) printf("Atexit failed to shutdown socket_fd\n");
-            close(socket_fd);
+            // close(socket_fd);
             exit(0);
             break;
         case(SUCCESS):
@@ -36,11 +36,11 @@ void registerOnServer(){
 
 
 int main(int argc, char *argv[]){
-    WRITE("I start\n");
+    
     __init__(argc, argv);
     registerOnServer();
     
-   
+    WRITE("I registered\n");
     while(1){
         
         Msg msg;
@@ -99,8 +99,8 @@ void __del__(){
     strcpy(msg.name,name);
     msg.type = UNREGISTER;
     write(socket_fd,&msg,sizeof(Msg));
-    if(shutdown(socket_fd,SHUT_RDWR)) printf("Atexit failed to shutdown socket_fd\n");
-    close(socket_fd);
+    // if(shutdown(socket_fd,SHUT_RDWR)) printf("Atexit failed to shutdown socket_fd\n");
+    // close(socket_fd);
 }
 
 
@@ -146,7 +146,7 @@ void __init__(int argc, char *argv[]){
        
         res = connect(socket_fd,(const struct sockaddr*) &address, sizeof(address));
         if(res == -1) FAILURE_EXIT("Failed in connecting to server_socket: %s\n",strerror(errno));
-        WRITE("2\n");
+      
     }else if(strcmp(argv[2],"unix")==0){
         
     }else{

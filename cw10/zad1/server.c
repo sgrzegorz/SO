@@ -1,7 +1,7 @@
 #include "common.h"
 
 #define MAX_EVENTS 10
-#define MAX_CLIENTS 4096
+#define MAX_CLIENTS 20
 
 #define WRITE(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
 
