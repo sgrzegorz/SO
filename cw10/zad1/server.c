@@ -76,7 +76,7 @@ int main(int argc, char *argv[]){
             struct epoll_event event1;
             event1.events = EPOLLIN;
             event1.data.fd = new_client;
-            WRITE("-->%i %i %i\n",new_client,event1.data.fd ,server_fd);
+            
             if(epoll_ctl(epoll,EPOLL_CTL_ADD,new_client,&event1)== -1) FAILURE_EXIT("Failed to register client on epoll: %s\n",strerror(errno));
         }else{
             receiveMessage(event.data.fd);
@@ -119,7 +119,7 @@ void *pingClients(void * arg){
 
 
 void receiveMessage(int fd){
-    WRITE("!\n");
+    
     Msg msg;
     read(fd,&msg,sizeof(Msg));
     switch(msg.type){
@@ -142,13 +142,14 @@ void receiveMessage(int fd){
             pthread_mutex_unlock(&mutex);
             break;
         case REGISTER:
-            WRITE("heeeeeeh\n")
+            
             pthread_mutex_lock(&mutex);
             for(int i=0;i<MAX_CLIENTS;i++){
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
-                    WRITE(">%i %i\n",server_fd,fd);
+                    
                     WRITE("Client name exists, kill client\n");
                     removeSocket(fd);
+                    pthread_mutex_unlock(&mutex);
                     return;
                 }
             }

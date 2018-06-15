@@ -45,7 +45,7 @@ int main(int argc, char *argv[]){
         
         Msg msg;
         read(socket_fd,&msg,sizeof(Msg));
-        WRITE("Msg received\n");
+        if(msg.type!=PING) WRITE("Msg received\n");
          
         Msg feedback;
         switch(msg.type){
