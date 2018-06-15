@@ -37,11 +37,21 @@ void signalHandler(){
 }
 
 void eraseClient(int i){
+    
     strcpy(client[i].name,"unknown");
     client[i].is_active =0;
     client[i].ponged =1;
     client[i].fd =-1;
 
+}
+
+void removeSocket(int fd){
+    Msg feedback;
+    feedback.type = KILL_CLIENT;
+    write(fd,&feedback,sizeof(feedback));
+    if (epoll_ctl(epoll, EPOLL_CTL_DEL, fd, NULL) == -1) FAILURE_EXIT("Error : Could not remove client's socket from epoll\n");
+   // if (shutdown(fd, SHUT_RDWR) == -1) FAILURE_EXIT("Could not shutdown client's socket: %s\n",strerror(errno));
+    if (close(fd) == -1) FAILURE_EXIT("Error : Could not close client's socket\n");
 }
 
 ///etc/init.d/networking restart
@@ -63,10 +73,11 @@ int main(int argc, char *argv[]){
         if(event.data.fd == server_fd){
             WRITE("Client accepted\n");
             int new_client = accept(server_fd,NULL,NULL);
-            struct epoll_event event;
-            event.events = EPOLLIN;
-            event.data.fd = new_client;
-            if(epoll_ctl(epoll,EPOLL_CTL_ADD,new_client,&event)== -1) FAILURE_EXIT("Failed to register client on epoll: %s\n",strerror(errno));
+            struct epoll_event event1;
+            event1.events = EPOLLIN;
+            event1.data.fd = new_client;
+            WRITE("-->%i %i %i\n",new_client,event1.data.fd ,server_fd);
+            if(epoll_ctl(epoll,EPOLL_CTL_ADD,new_client,&event1)== -1) FAILURE_EXIT("Failed to register client on epoll: %s\n",strerror(errno));
         }else{
             receiveMessage(event.data.fd);
         }
@@ -96,10 +107,7 @@ void *pingClients(void * arg){
         pthread_mutex_lock(&ping_mutex);        
         for(int i=0;i<MAX_CLIENTS;i++){
             if(client[i].is_active && client[i].ponged ==0){
-                Msg msg;
-                msg.type = KILL_CLIENT;
-                write(client[i].fd,&msg,sizeof(Msg));
-                close(client[i].fd);
+                removeSocket(client[i].fd);
                 eraseClient(i);
             }
         }
@@ -111,6 +119,7 @@ void *pingClients(void * arg){
 
 
 void receiveMessage(int fd){
+    WRITE("!\n");
     Msg msg;
     read(fd,&msg,sizeof(Msg));
     switch(msg.type){
@@ -122,8 +131,9 @@ void receiveMessage(int fd){
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
                     flag=1;
                     nclients--;
-                    if(epoll_ctl(epoll,EPOLL_CTL_DEL,client[i].fd,0)== -1) FAILURE_EXIT("Failed to delete client on epoll: %s\n",strerror(errno));
+                    removeSocket(client[i].fd);
                     eraseClient(i);
+                    
                     break;
                 }
             }
@@ -132,18 +142,13 @@ void receiveMessage(int fd){
             pthread_mutex_unlock(&mutex);
             break;
         case REGISTER:
-            WRITE("HHHHHHHHHHHHHHHH\n");
+            WRITE("heeeeeeh\n")
             pthread_mutex_lock(&mutex);
             for(int i=0;i<MAX_CLIENTS;i++){
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
-
+                    WRITE(">%i %i\n",server_fd,fd);
                     WRITE("Client name exists, kill client\n");
-                    Msg feedback;
-                    feedback.type = KILL_CLIENT;
-                    write(fd,&feedback,sizeof(feedback));
-                    
-                    if(epoll_ctl(epoll,EPOLL_CTL_DEL,fd,0)== -1) FAILURE_EXIT("Failed to delete client on epoll: %s\n",strerror(errno));
-                    close(fd);
+                    removeSocket(fd);
                     return;
                 }
             }
@@ -158,6 +163,10 @@ void receiveMessage(int fd){
                     nclients++;
                     WRITE("Client: %s registered successfully\n",client[i].name);
                     client_registered_successfully=1;
+
+                    Msg feedback;
+                    feedback.type =SUCCESS;
+                    write(fd,&feedback,sizeof(Msg));
                     break;
                 }   
             }
@@ -251,7 +260,7 @@ void __init__(int argc, char *argv[]){
     if(server_fd == -1)  FAILURE_EXIT("Failed to create communication endpoint\n");
 
     int yes=1;
-    if (setsockopt(server_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+    if (setsockopt(server_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes)) == -1) {
         FAILURE_EXIT("setsockopt");
     }
     

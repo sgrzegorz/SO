@@ -12,43 +12,65 @@ void howToUse();
 void sigintHandler(){ exit(0);}
 void __init__(int argc, char *argv[]);
 
-int main(int argc, char *argv[]){
-    WRITE("I start\n");
-    __init__(argc, argv);
-     
-        WRITE("9\n");
+void registerOnServer(){
     Msg msg;
     strcpy(msg.name,name);
     msg.type = REGISTER;
     write(socket_fd,&msg,sizeof(Msg));
- 
-        WRITE("8\n");
+
+    Msg feedback;
+    read(socket_fd,&feedback,sizeof(Msg));
+
+    switch(feedback.type){
+        case(KILL_CLIENT):
+            WRITE("!\n");
+            if(shutdown(socket_fd,SHUT_RDWR)) printf("Atexit failed to shutdown socket_fd\n");
+            close(socket_fd);
+            exit(0);
+            break;
+        case(SUCCESS):
+            atexit(__del__);
+            break;
+    }
+}
+
+
+int main(int argc, char *argv[]){
+    WRITE("I start\n");
+    __init__(argc, argv);
+    registerOnServer();
+    
+   
     while(1){
+        
         Msg msg;
-        Msg feedback;
-        WRITE("8\n");
         read(socket_fd,&msg,sizeof(Msg));
-          WRITE("7\n");
         WRITE("Msg received\n");
+         
+        Msg feedback;
         switch(msg.type){
             case MUL:
+                
                 feedback.type = RESULT;
                 feedback.result = msg.arg1 * msg.arg2;
                 write(socket_fd,&feedback,sizeof(feedback));
                 break;
             case ADD:
+                
                 feedback.type = RESULT;
                 feedback.result = msg.arg1 + msg.arg2;
                 write(socket_fd,&feedback,sizeof(feedback));
                 break;
 
             case DIV:
+                
                 feedback.type = RESULT;
                 feedback.result = msg.arg1 / msg.arg2;
                 write(socket_fd,&feedback,sizeof(feedback));
                 break;
 
             case SUB:
+                         
                 feedback.type = RESULT;
                 feedback.result = msg.arg1 - msg.arg2;
                 write(socket_fd,&feedback,sizeof(feedback));
@@ -118,6 +140,9 @@ void __init__(int argc, char *argv[]){
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = htonl(INADDR_ANY);
         address.sin_port = port_number;
+
+
+        
        
         res = connect(socket_fd,(const struct sockaddr*) &address, sizeof(address));
         if(res == -1) FAILURE_EXIT("Failed in connecting to server_socket: %s\n",strerror(errno));
@@ -130,5 +155,5 @@ void __init__(int argc, char *argv[]){
     
 
 
-    atexit(__del__);
+    
 }

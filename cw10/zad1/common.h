@@ -20,7 +20,7 @@ typedef struct{
     char name[MAX_ARRAY];
 }Msg;
 
-enum operation{MUL=0,ADD,DIV,SUB,KILL_CLIENT,PING,PONG,RESULT,UNREGISTER,REGISTER};
+enum operation{MUL=0,ADD,DIV,SUB,KILL_CLIENT,PING,PONG,RESULT,UNREGISTER,REGISTER,SUCCESS};
 
 
 #define WRITE(format, ...) { char buffer[255]; sprintf(buffer, format, ##__VA_ARGS__); write(1, buffer, strlen(buffer));}
