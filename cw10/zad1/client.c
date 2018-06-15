@@ -6,18 +6,75 @@ char *ip;
 int port;
 char *path;
 
+
+void __del__();
+void howToUse();
+void sigintHandler(){ exit(0);}
+void __init__(int argc, char *argv[]);
+
+int main(int argc, char *argv[]){
+    __init__(argc, argv);
+
+    Msg msg;
+    strcpy(msg.name,name);
+    msg.type = REGISTER;
+    write(socket_fd,&msg,sizeof(Msg));
+
+    while(1){
+        Msg msg;
+        Msg feedback;
+        read(socket_fd,&msg,sizeof(Msg));
+        WRITE("Msg received\n");
+        switch(msg.type){
+            case MUL:
+                feedback.type = RESULT;
+                feedback.result = msg.arg1 * msg.arg2;
+                write(socket_fd,&feedback,sizeof(feedback));
+                break;
+            case ADD:
+                feedback.type = RESULT;
+                feedback.result = msg.arg1 + msg.arg2;
+                write(socket_fd,&feedback,sizeof(feedback));
+                break;
+
+            case DIV:
+                feedback.type = RESULT;
+                feedback.result = msg.arg1 / msg.arg2;
+                write(socket_fd,&feedback,sizeof(feedback));
+                break;
+
+            case SUB:
+                feedback.type = RESULT;
+                feedback.result = msg.arg1 - msg.arg2;
+                write(socket_fd,&feedback,sizeof(feedback));
+                break;
+
+            case KILL_CLIENT:
+                exit(0);
+                break;
+
+            case PING:
+                feedback.type = PONG;
+                write(socket_fd,&feedback,sizeof(feedback));
+                break;
+            default:
+                WRITE("Unknown message type\n");
+        }
+    }
+
+}
+
+
+
 void __del__(){
     Msg msg;
     msg.type = UNREGISTER;
-    strcpy(msg.name,name);
     write(socket_fd,&msg,sizeof(Msg));
     if(shutdown(socket_fd,SHUT_RDWR)) printf("Atexit failed to shutdown socket_fd\n");
     close(socket_fd);
 }
 
-void sigintHandler(){
-    exit(0);
-}
+
 
 void howToUse(){
     printf("./client <name> <lan> <ipv4> <port>  or ./client <name> <unix> <path> \n");
@@ -66,58 +123,4 @@ void __init__(int argc, char *argv[]){
 
 
     atexit(__del__);
-}
-
-
-
-
-int main(int argc, char *argv[]){
-    __init__(argc, argv);
-
-    Msg msg;
-    msg.type = REGISTER;
-    write(socket_fd,&msg,sizeof(Msg));
-
-    while(1){
-        Msg msg;
-        Msg feedback;
-        read(socket_fd,&msg,sizeof(Msg));
-        WRITE("Msg received\n");
-        switch(msg.type){
-            case MUL:
-                feedback.type = RESULT;
-                feedback.result = msg.arg1 * msg.arg2;
-                write(socket_fd,&feedback,sizeof(feedback));
-                break;
-            case ADD:
-                feedback.type = RESULT;
-                feedback.result = msg.arg1 + msg.arg2;
-                write(socket_fd,&feedback,sizeof(feedback));
-                break;
-
-            case DIV:
-                feedback.type = RESULT;
-                feedback.result = msg.arg1 / msg.arg2;
-                write(socket_fd,&feedback,sizeof(feedback));
-                break;
-
-            case SUB:
-                feedback.type = RESULT;
-                feedback.result = msg.arg1 - msg.arg2;
-                write(socket_fd,&feedback,sizeof(feedback));
-                break;
-
-            case KILL_CLIENT:
-                exit(0);
-                break;
-
-            case PING:
-                feedback.type = PONG;
-                write(socket_fd,&feedback,sizeof(feedback));
-                break;
-            default:
-                WRITE("Unknown message type\n");
-        }
-    }
-
 }

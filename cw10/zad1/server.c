@@ -116,7 +116,7 @@ void receiveMessage(int fd){
                     client[i].is_active =0;
                     flag=1;
                     nclients--;
-                     if(epoll_ctl(epoll,EPOLL_CTL_DEL,client[i].fd,0)== -1) FAILURE_EXIT("Failed to delete client on epoll: %s\n",strerror(errno));
+                    if(epoll_ctl(epoll,EPOLL_CTL_DEL,client[i].fd,0)== -1) FAILURE_EXIT("Failed to delete client on epoll: %s\n",strerror(errno));
                     break;
                 }
             }
@@ -133,6 +133,9 @@ void receiveMessage(int fd){
                     feedback.type = KILL_CLIENT;
                     write(fd,&feedback,sizeof(feedback));
                     WRITE("Client name exists\n");
+                    if(epoll_ctl(epoll,EPOLL_CTL_DEL,fd,0)== -1) FAILURE_EXIT("Failed to delete client on epoll: %s\n",strerror(errno));
+                   // if(shutdown(fd,SHUT_RDWR)) printf("Atexit failed to shutdown : %s\n",strerror(errno));
+                    close(fd);
                     return;
                 }
             }
@@ -145,8 +148,9 @@ void receiveMessage(int fd){
                     WRITE("%s\n",msg.name);
                     client[i].is_active=1;
                     client[i].ponged=1;
+                    strcpy(client[i].name,msg.name);
                     nclients++;
-                    WRITE("Client registered %s successfully\n",client[i].name);
+                    WRITE("Client: %s registered successfully\n",client[i].name);
                     client_registered_successfully=1;
                     break;
                 }   
@@ -263,6 +267,13 @@ void __init__(int argc, char *argv[]){
     event.events = EPOLLIN;
     event.data.fd = server_fd;
     if(epoll_ctl(epoll,EPOLL_CTL_ADD,server_fd,&event)== -1) FAILURE_EXIT("Failed to register server_fd file descriptor on epoll instance:   %s\n",strerror(errno));
+
+    for(int i=0;i<MAX_CLIENTS;i++){
+        client[i].is_active=0;
+        client[i].fd=-1;
+        strcpy(client[i].name,"unknown");
+        client[i].ponged=-4;
+    }
 
     pthread_create(&threads[0],NULL,handleTerminal,NULL);
     pthread_create(&threads[1],NULL,pingClients,NULL);
