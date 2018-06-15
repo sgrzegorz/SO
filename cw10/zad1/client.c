@@ -13,6 +13,7 @@ void sigintHandler(){ exit(0);}
 void __init__(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
+    WRITE("I start\n");
     __init__(argc, argv);
 
     Msg msg;
@@ -68,6 +69,7 @@ int main(int argc, char *argv[]){
 
 void __del__(){
     Msg msg;
+    strcpy(msg.name,name);
     msg.type = UNREGISTER;
     write(socket_fd,&msg,sizeof(Msg));
     if(shutdown(socket_fd,SHUT_RDWR)) printf("Atexit failed to shutdown socket_fd\n");
