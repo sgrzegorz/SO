@@ -36,7 +36,13 @@ void signalHandler(){
     exit(0);
 }
 
+void eraseClient(int i){
+    strcpy(client[i].name,"unknown");
+    client[i].is_active =0;
+    client[i].ponged =1;
+    client[i].fd =-1;
 
+}
 
 ///etc/init.d/networking restart
 
@@ -50,11 +56,12 @@ int main(int argc, char *argv[]){
 
     while(1){
         // struct epoll_event event;
-        pthread_mutex_lock(&ping_mutex);
+       
         struct epoll_event event;
         int nfd = epoll_wait(epoll,&event,1,-1);
 
         if(event.data.fd == server_fd){
+            WRITE("Client accepted\n");
             int new_client = accept(server_fd,NULL,NULL);
             struct epoll_event event;
             event.events = EPOLLIN;
@@ -63,7 +70,7 @@ int main(int argc, char *argv[]){
         }else{
             receiveMessage(event.data.fd);
         }
-        pthread_mutex_unlock(&ping_mutex);
+
        
     }
     close(server_fd);
@@ -92,8 +99,8 @@ void *pingClients(void * arg){
                 Msg msg;
                 msg.type = KILL_CLIENT;
                 write(client[i].fd,&msg,sizeof(Msg));
-                client[i].is_active = 0;
                 close(client[i].fd);
+                eraseClient(i);
             }
         }
         pthread_mutex_unlock(&ping_mutex);
@@ -113,10 +120,10 @@ void receiveMessage(int fd){
             for(int i=0;i<MAX_CLIENTS;i++){
                 
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
-                    client[i].is_active =0;
                     flag=1;
                     nclients--;
                     if(epoll_ctl(epoll,EPOLL_CTL_DEL,client[i].fd,0)== -1) FAILURE_EXIT("Failed to delete client on epoll: %s\n",strerror(errno));
+                    eraseClient(i);
                     break;
                 }
             }
@@ -125,16 +132,17 @@ void receiveMessage(int fd){
             pthread_mutex_unlock(&mutex);
             break;
         case REGISTER:
-
+            WRITE("HHHHHHHHHHHHHHHH\n");
             pthread_mutex_lock(&mutex);
             for(int i=0;i<MAX_CLIENTS;i++){
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
+
+                    WRITE("Client name exists, kill client\n");
                     Msg feedback;
                     feedback.type = KILL_CLIENT;
                     write(fd,&feedback,sizeof(feedback));
-                    WRITE("Client name exists\n");
+                    
                     if(epoll_ctl(epoll,EPOLL_CTL_DEL,fd,0)== -1) FAILURE_EXIT("Failed to delete client on epoll: %s\n",strerror(errno));
-                   // if(shutdown(fd,SHUT_RDWR)) printf("Atexit failed to shutdown : %s\n",strerror(errno));
                     close(fd);
                     return;
                 }
@@ -144,8 +152,6 @@ void receiveMessage(int fd){
             for(int i=0;i<MAX_CLIENTS;i++){
                 if(client[i].is_active == 0){
                     client[i].fd = fd;
-                    WRITE("%s\n",client[i].name);
-                    WRITE("%s\n",msg.name);
                     client[i].is_active=1;
                     client[i].ponged=1;
                     strcpy(client[i].name,msg.name);
@@ -179,6 +185,7 @@ void receiveMessage(int fd){
     }
     
 }
+
 
 
 
@@ -269,10 +276,7 @@ void __init__(int argc, char *argv[]){
     if(epoll_ctl(epoll,EPOLL_CTL_ADD,server_fd,&event)== -1) FAILURE_EXIT("Failed to register server_fd file descriptor on epoll instance:   %s\n",strerror(errno));
 
     for(int i=0;i<MAX_CLIENTS;i++){
-        client[i].is_active=0;
-        client[i].fd=-1;
-        strcpy(client[i].name,"unknown");
-        client[i].ponged=-4;
+        eraseClient(i);
     }
 
     pthread_create(&threads[0],NULL,handleTerminal,NULL);
@@ -281,14 +285,14 @@ void __init__(int argc, char *argv[]){
 
 
 void __del__(){
-    if(shutdown(server_fd,SHUT_RDWR)) printf("Atexit failed to shutdown server_fd: %s\n",strerror(errno));
     close(server_fd);
     for(int i=0;i<MAX_CLIENTS;i++){
         if(client[i].is_active){
             Msg msg;
             msg.type = KILL_CLIENT;
             write(client[i].fd,&msg,sizeof(Msg));
-             close(client[i].fd);
+            close(client[i].fd);
+            eraseClient(i);
         }
     }
 }

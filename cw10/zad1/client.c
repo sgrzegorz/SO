@@ -15,16 +15,20 @@ void __init__(int argc, char *argv[]);
 int main(int argc, char *argv[]){
     WRITE("I start\n");
     __init__(argc, argv);
-
+     
+        WRITE("9\n");
     Msg msg;
     strcpy(msg.name,name);
     msg.type = REGISTER;
     write(socket_fd,&msg,sizeof(Msg));
-
+ 
+        WRITE("8\n");
     while(1){
         Msg msg;
         Msg feedback;
+        WRITE("8\n");
         read(socket_fd,&msg,sizeof(Msg));
+          WRITE("7\n");
         WRITE("Msg received\n");
         switch(msg.type){
             case MUL:
@@ -59,7 +63,8 @@ int main(int argc, char *argv[]){
                 write(socket_fd,&feedback,sizeof(feedback));
                 break;
             default:
-                WRITE("Unknown message type\n");
+                //WRITE("Unknown message type\n");
+                exit(0);
         }
     }
 
@@ -113,9 +118,10 @@ void __init__(int argc, char *argv[]){
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = htonl(INADDR_ANY);
         address.sin_port = port_number;
-        
+       
         res = connect(socket_fd,(const struct sockaddr*) &address, sizeof(address));
         if(res == -1) FAILURE_EXIT("Failed in connecting to server_socket: %s\n",strerror(errno));
+        WRITE("2\n");
     }else if(strcmp(argv[2],"unix")==0){
         
     }else{
