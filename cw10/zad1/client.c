@@ -150,6 +150,7 @@ void __init__(int argc, char *argv[]){
     }else if(strcmp(argv[2],"unix")==0){
         struct sockaddr_un local_address;
         local_address.sun_family = AF_UNIX;
+        strcpy(local_address.sun_path,"./myfile") ;
 
         socket_fd = socket(AF_UNIX, SOCK_STREAM,0);
         if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
@@ -157,6 +158,8 @@ void __init__(int argc, char *argv[]){
         int res = connect(socket_fd,(const struct sockaddr*) &local_address, sizeof(local_address));
         if(res == -1) FAILURE_EXIT("Failed in connecting to server_socket: %s\n",strerror(errno));
       
+
+
 
         
     }else{

@@ -271,15 +271,17 @@ void __init__(int argc, char *argv[]){
     if(listen(web_fd,100) == -1) FAILURE_EXIT("Failed to mark web_fd as a passive socket\n");
     
     //Local socket -----------------------------------------------------------------------------
-    if((local_fd = socket(AF_INET, SOCK_STREAM,0)) == -1) FAILURE_EXIT("Failed to create communication endpoint local_fd\n");
+     if((local_fd = socket(AF_UNIX, SOCK_STREAM,0)) == -1) FAILURE_EXIT("Failed to create communication endpoint local_fd\n");
     int yes1=1;
     if (setsockopt(web_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes1)) == -1) FAILURE_EXIT("setsockopt local");
-    
-    local_address.sun_family = AF_UNIX;    
+    remove("./myfile");
+    local_address.sun_family = AF_UNIX;  
+    strcpy(local_address.sun_path,"./myfile") ;
  
     if(bind(local_fd,(const struct sockaddr*) &local_address,sizeof(struct sockaddr_un)) == -1) FAILURE_EXIT("Failed to assign server_addr to a local_fd: %s\n",strerror(errno));
 
     if(listen(local_fd,100) == -1) FAILURE_EXIT("Failed to mark local_fd as a passive socket\n");
+   
     //------------------------------------
 
     epoll = epoll_create1(0);
@@ -293,6 +295,7 @@ void __init__(int argc, char *argv[]){
     event.data.fd = local_fd;
     if(epoll_ctl(epoll,EPOLL_CTL_ADD,local_fd,&event)== -1) FAILURE_EXIT("Failed to register local_fd file descriptor on epoll instance:   %s\n",strerror(errno));
 
+   
 
     for(int i=0;i<MAX_CLIENTS;i++){
         eraseClient(i);
