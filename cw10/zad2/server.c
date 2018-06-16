@@ -70,7 +70,6 @@ int main(int argc, char *argv[]){
     while(1){
        
         struct epoll_event event;
-        
         int nfd = epoll_wait(epoll,&event,1,-1);
    
         if(event.data.fd == web_fd || event.data.fd == local_fd){
@@ -276,7 +275,7 @@ void __init__(int argc, char *argv[]){
     srand(time(NULL));
     
     //web socket ---------------------------------------------------------------------------
-    if((web_fd = socket(AF_INET, SOCK_STREAM,0)) == -1) FAILURE_EXIT("Failed to create communication endpoint web_fd\n");
+    if((web_fd = socket(AF_INET, SOCK_DGRAM,0)) == -1) FAILURE_EXIT("Failed to create communication endpoint web_fd\n");
 
     int yes=1;
     if (setsockopt(web_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes)) == -1) FAILURE_EXIT("setsockopt web_fd\n");
@@ -289,10 +288,10 @@ void __init__(int argc, char *argv[]){
        
     if(bind(web_fd,(const struct sockaddr*) &server_addr,sizeof(struct sockaddr)) == -1) FAILURE_EXIT("Failed to assign server_addr to a web_fd: %s\n",strerror(errno));
 
-    if(listen(web_fd,100) == -1) FAILURE_EXIT("Failed to mark web_fd as a passive socket\n");
-    
+
+
     //Local socket -----------------------------------------------------------------------------
-     if((local_fd = socket(AF_UNIX, SOCK_STREAM,0)) == -1) FAILURE_EXIT("Failed to create communication endpoint local_fd\n");
+     if((local_fd = socket(AF_UNIX, SOCK_DGRAM,0)) == -1) FAILURE_EXIT("Failed to create communication endpoint local_fd\n");
     int yes1=1;
     if (setsockopt(web_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes1)) == -1) FAILURE_EXIT("setsockopt local");
     remove(unix_path);
@@ -300,8 +299,6 @@ void __init__(int argc, char *argv[]){
     strcpy(local_address.sun_path,unix_path) ;
  
     if(bind(local_fd,(const struct sockaddr*) &local_address,sizeof(struct sockaddr_un)) == -1) FAILURE_EXIT("Failed to assign server_addr to a local_fd: %s\n",strerror(errno));
-
-    if(listen(local_fd,100) == -1) FAILURE_EXIT("Failed to mark local_fd as a passive socket\n");
    
     //------------------------------------
 

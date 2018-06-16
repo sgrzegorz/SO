@@ -122,7 +122,7 @@ void __init__(int argc, char *argv[]){
         port = atoi(argv[4]);
         
         int res;
-        socket_fd = socket(AF_INET, SOCK_STREAM,0);
+        socket_fd = socket(AF_INET, SOCK_DGRAM,0);
         if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
 
         uint32_t ip = inet_addr(argv[3]); // this code I get when I type "what is my ip?" in internet
@@ -137,10 +137,8 @@ void __init__(int argc, char *argv[]){
         address.sin_addr.s_addr = htonl(INADDR_ANY);
         address.sin_port = port_number;
 
-       
-        res = connect(socket_fd,(const struct sockaddr*) &address, sizeof(address));
-        if(res == -1) FAILURE_EXIT("Failed in connecting to server_socket inet: %s\n",strerror(errno));
-      
+        if(connect(socket_fd, (const struct sockaddr*) &address, sizeof(struct sockaddr)) == -1) FAILURE_EXIT("Failed to assign server_addr to a web_fd: %s\n",strerror(errno));
+
     }else if(strcmp(argv[2],"unix")==0 && argc == 4){
         strcpy(name,argv[1]);
         path = argv[3];
@@ -149,7 +147,7 @@ void __init__(int argc, char *argv[]){
         local_address.sun_family = AF_UNIX;
         strcpy(local_address.sun_path,path);
 
-        socket_fd = socket(AF_UNIX, SOCK_STREAM,0);
+        socket_fd = socket(AF_UNIX, SOCK_DGRAM,0);
         if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
 
         int res = connect(socket_fd,(const struct sockaddr*) &local_address, sizeof(local_address));
