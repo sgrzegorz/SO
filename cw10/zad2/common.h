@@ -20,6 +20,7 @@ typedef struct{
     char name[MAX_ARRAY];
 }Msg;
 
+
 enum operation{MUL=0,ADD=1,DIV=2,SUB=3,KILL_CLIENT=4,PING=5,PONG=6,RESULT=7,UNREGISTER=8,REGISTER=9,SUCCESS=10};
 
 

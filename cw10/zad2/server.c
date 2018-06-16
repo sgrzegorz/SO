@@ -7,9 +7,10 @@
 
 typedef struct{
     int is_active;
-    int fd;
+    struct sockaddr address;
     char name[MAX_ARRAY];
     int ponged;
+    int fd;
 }Client;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
@@ -74,12 +75,9 @@ int main(int argc, char *argv[]){
             
 
             WRITE("Client accepted\n");
-
-
-             
-            
         
             receiveMessage(event.data.fd);
+
         }
 
        
@@ -90,14 +88,15 @@ int main(int argc, char *argv[]){
 
 void *pingClients(void * arg){
     while(1){
-
+        
         pthread_mutex_lock(&ping_mutex);
         for(int i=0;i<MAX_CLIENTS;i++){
             if(client[i].is_active){
                 client[i].ponged =0;
                 Msg msg;
                 msg.type =PING;
-                write(client[i].fd,&msg,sizeof(Msg));
+                sendto(client[i].fd, (const void *)&msg, sizeof(Msg),0, &address,sizeof(struct sockaddr));
+
             }
         }
         pthread_mutex_unlock(&ping_mutex);
@@ -107,7 +106,7 @@ void *pingClients(void * arg){
         pthread_mutex_lock(&ping_mutex);        
         for(int i=0;i<MAX_CLIENTS;i++){
             if(client[i].is_active && client[i].ponged ==0){
-                removeSocket(client[i].fd);
+                removeSocket(client[i].fd,client[i].address);
                 eraseClient(i);
             }
         }
@@ -165,9 +164,10 @@ void receiveMessage(int fd){
             int client_registered_successfully = 0;
             for(int i=0;i<MAX_CLIENTS;i++){
                 if(client[i].is_active == 0){
-                    client[i].fd = fd;
+                    client[i].address = address;
                     client[i].is_active=1;
                     client[i].ponged=1;
+                    client[i].fd = fd;
                     strcpy(client[i].name,msg.name);
                     nclients++;
                     WRITE("Client: %s registered successfully\n",client[i].name);
@@ -247,6 +247,7 @@ void *handleTerminal(void * arg){
         for(int i=0;i<MAX_CLIENTS;i++){
             if(client[i].is_active){
                 if(k == who){
+
                     write(client[i].fd,&msg,sizeof(Msg));
                     break;
                 }
@@ -322,16 +323,17 @@ void __init__(int argc, char *argv[]){
 
 
 void __del__(){
-    close(web_fd);
-    close(local_fd);
+   
     for(int i=0;i<MAX_CLIENTS;i++){
         if(client[i].is_active){
             Msg msg;
             msg.type = KILL_CLIENT;
-            write(client[i].fd,&msg,sizeof(Msg));
-            close(client[i].fd);
+            sendto(client[i].fd, (const void *)&msg, sizeof(Msg),0, &client[i].address,sizeof(struct sockaddr));
+
             eraseClient(i);
         }
     }
+    close(web_fd);
+    close(local_fd);
     remove(unix_path);
 }
