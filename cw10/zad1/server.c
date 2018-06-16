@@ -25,6 +25,8 @@ struct sockaddr_in server_addr;
 struct sockaddr_un local_address;
 
 pthread_t threads[3];
+char unix_path[MAX_ARRAY];
+int port_number;
 
 void __del__();
 void __init__(int argc, char*argv[]);
@@ -69,9 +71,9 @@ int main(int argc, char *argv[]){
         // struct epoll_event event;
        
         struct epoll_event event;
-        WRITE("4\n");
+        
         int nfd = epoll_wait(epoll,&event,1,-1);
-        WRITE("5\n");
+   
         if(event.data.fd == web_fd || event.data.fd == local_fd){
             int new_client;
             if(event.data.fd == web_fd){
@@ -83,16 +85,16 @@ int main(int argc, char *argv[]){
             struct epoll_event event1;
             event1.events = EPOLLIN;
             event1.data.fd = new_client;
-             WRITE("--\n");
+             
             if(epoll_ctl(epoll,EPOLL_CTL_ADD,new_client,&event1)== -1) FAILURE_EXIT("Failed to register client on epoll: %s\n",strerror(errno));
-             WRITE("---\n");
+            
         }else{
             receiveMessage(event.data.fd);
         }
 
        
     }
-    close(web_fd);
+    
 
 }
 
@@ -130,8 +132,11 @@ void receiveMessage(int fd){
     
     Msg msg;
     read(fd,&msg,sizeof(Msg));
+    WRITE("-> %i\n",msg.type);
     switch(msg.type){
+       
         case UNREGISTER:
+            WRITE("111\n");
             pthread_mutex_lock(&mutex);
             int flag =0;
             for(int i=0;i<MAX_CLIENTS;i++){
@@ -150,11 +155,12 @@ void receiveMessage(int fd){
             pthread_mutex_unlock(&mutex);
             break;
         case REGISTER:
+             WRITE("2222\n");
             
             pthread_mutex_lock(&mutex);
             for(int i=0;i<MAX_CLIENTS;i++){
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
-                    
+                    WRITE("%i %i\n",local_fd,fd);
                     WRITE("Client name exists, kill client\n");
                     removeSocket(fd);
                     pthread_mutex_unlock(&mutex);
@@ -255,9 +261,18 @@ void *handleTerminal(void * arg){
         pthread_mutex_unlock(&mutex);
     }
 }
+void howToUse(){
+    printf("./server 9992 ./myfile\n");
+    exit(0);
+}
 
 void __init__(int argc, char *argv[]){
- //   signal(SIGINT,signalHandler);
+    if(argc!=3) howToUse();
+    strcpy(unix_path,argv[2]);
+    port_number = atoi(argv[1]);
+    if(port_number<100 || port_number > 65535 ) howToUse();
+
+    signal(SIGINT,signalHandler);
     atexit(__del__);
     srand(time(NULL));
     
@@ -269,7 +284,7 @@ void __init__(int argc, char *argv[]){
     
     memset(&server_addr,'\0',sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(9992);
+    server_addr.sin_port = htons(port_number);
     server_addr.sin_addr.s_addr = INADDR_ANY;
     
        
@@ -281,9 +296,9 @@ void __init__(int argc, char *argv[]){
      if((local_fd = socket(AF_UNIX, SOCK_STREAM,0)) == -1) FAILURE_EXIT("Failed to create communication endpoint local_fd\n");
     int yes1=1;
     if (setsockopt(web_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes1)) == -1) FAILURE_EXIT("setsockopt local");
-    remove("./myfile");
+    remove(unix_path);
     local_address.sun_family = AF_UNIX;  
-    strcpy(local_address.sun_path,"./myfile") ;
+    strcpy(local_address.sun_path,unix_path) ;
  
     if(bind(local_fd,(const struct sockaddr*) &local_address,sizeof(struct sockaddr_un)) == -1) FAILURE_EXIT("Failed to assign server_addr to a local_fd: %s\n",strerror(errno));
 

@@ -19,9 +19,9 @@ void registerOnServer(){
     write(socket_fd,&msg,sizeof(Msg));
 
     Msg feedback;
-    WRITE("1\n");
+ 
     read(socket_fd,&feedback,sizeof(Msg));
-    WRITE("2\n");
+
 
     switch(feedback.type){
         case(KILL_CLIENT):
@@ -101,6 +101,7 @@ void __del__(){
     strcpy(msg.name,name);
     msg.type = UNREGISTER;
     write(socket_fd,&msg,sizeof(Msg));
+    remove(path);
     // if(shutdown(socket_fd,SHUT_RDWR)) printf("Atexit failed to shutdown socket_fd\n");
     // close(socket_fd);
 }
@@ -110,23 +111,16 @@ void __del__(){
 void howToUse(){
     printf("./client <name> <lan> <ipv4> <port>  or ./client <name> <unix> <path> \n");
     printf("./client 1 lan 94.254.145.105 9992\n");
+    printf("./client 1 unix ./myfile\n");
     exit(0);
 }
 void __init__(int argc, char *argv[]){
-    if(argc == 5){
+    signal(SIGINT,sigintHandler);
+    
+    if(strcmp(argv[2],"lan")==0 && argc == 5){
         strcpy(name,argv[1]);
         port = atoi(argv[4]);
-
-    }else if(argc ==4){
-        strcpy(name,argv[1]);
-        path = argv[3];
-
-    }else{
-        howToUse();
-    }
-    
-    if(strcmp(argv[2],"lan")==0){
-        signal(SIGINT,sigintHandler);
+        
         int res;
         socket_fd = socket(AF_INET, SOCK_STREAM,0);
         if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
@@ -143,22 +137,23 @@ void __init__(int argc, char *argv[]){
         address.sin_addr.s_addr = htonl(INADDR_ANY);
         address.sin_port = port_number;
 
-
-        
        
         res = connect(socket_fd,(const struct sockaddr*) &address, sizeof(address));
-        if(res == -1) FAILURE_EXIT("Failed in connecting to server_socket: %s\n",strerror(errno));
+        if(res == -1) FAILURE_EXIT("Failed in connecting to server_socket inet: %s\n",strerror(errno));
       
-    }else if(strcmp(argv[2],"unix")==0){
+    }else if(strcmp(argv[2],"unix")==0 && argc == 4){
+        strcpy(name,argv[1]);
+        path = argv[3];
+
         struct sockaddr_un local_address;
         local_address.sun_family = AF_UNIX;
-        strcpy(local_address.sun_path,"./myfile") ;
+        strcpy(local_address.sun_path,path);
 
         socket_fd = socket(AF_UNIX, SOCK_STREAM,0);
         if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
 
         int res = connect(socket_fd,(const struct sockaddr*) &local_address, sizeof(local_address));
-        if(res == -1) FAILURE_EXIT("Failed in connecting to server_socket: %s\n",strerror(errno));
+        if(res == -1) FAILURE_EXIT("Failed in connecting to server_socket unix: %s\n",strerror(errno));
       
 
 
