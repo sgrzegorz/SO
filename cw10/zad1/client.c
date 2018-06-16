@@ -19,7 +19,9 @@ void registerOnServer(){
     write(socket_fd,&msg,sizeof(Msg));
 
     Msg feedback;
+    WRITE("1\n");
     read(socket_fd,&feedback,sizeof(Msg));
+    WRITE("2\n");
 
     switch(feedback.type){
         case(KILL_CLIENT):

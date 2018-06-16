@@ -69,16 +69,23 @@ int main(int argc, char *argv[]){
         // struct epoll_event event;
        
         struct epoll_event event;
+        WRITE("4\n");
         int nfd = epoll_wait(epoll,&event,1,-1);
-
+        WRITE("5\n");
         if(event.data.fd == web_fd || event.data.fd == local_fd){
+            int new_client;
+            if(event.data.fd == web_fd){
+                new_client = accept(web_fd,NULL,NULL);
+            }else if(event.data.fd == local_fd){
+                new_client = accept(local_fd,NULL,NULL);
+            }
             WRITE("Client accepted\n");
-            int new_client = accept(web_fd,NULL,NULL);
             struct epoll_event event1;
             event1.events = EPOLLIN;
             event1.data.fd = new_client;
-            
+             WRITE("--\n");
             if(epoll_ctl(epoll,EPOLL_CTL_ADD,new_client,&event1)== -1) FAILURE_EXIT("Failed to register client on epoll: %s\n",strerror(errno));
+             WRITE("---\n");
         }else{
             receiveMessage(event.data.fd);
         }
@@ -250,7 +257,7 @@ void *handleTerminal(void * arg){
 }
 
 void __init__(int argc, char *argv[]){
-    signal(SIGINT,signalHandler);
+ //   signal(SIGINT,signalHandler);
     atexit(__del__);
     srand(time(NULL));
     
@@ -301,8 +308,8 @@ void __init__(int argc, char *argv[]){
         eraseClient(i);
     }
 
-    pthread_create(&threads[0],NULL,handleTerminal,NULL);
-    pthread_create(&threads[1],NULL,pingClients,NULL);
+    // pthread_create(&threads[0],NULL,handleTerminal,NULL);
+    // pthread_create(&threads[1],NULL,pingClients,NULL);
 }
 
 
