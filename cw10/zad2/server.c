@@ -48,13 +48,11 @@ void eraseClient(int i){
 
 }
 
-void removeSocket(int fd){
+void removeSocket(int fd,struct sockaddr &address){
     Msg feedback;
     feedback.type = KILL_CLIENT;
-    write(fd,&feedback,sizeof(feedback));
-    if (epoll_ctl(epoll, EPOLL_CTL_DEL, fd, NULL) == -1) FAILURE_EXIT("Error : Could not remove client's socket from epoll\n");
-   // if (shutdown(fd, SHUT_RDWR) == -1) FAILURE_EXIT("Could not shutdown client's socket: %s\n",strerror(errno));
-    if (close(fd) == -1) FAILURE_EXIT("Error : Could not close client's socket\n");
+    sendto(fd, (const void *)&feedback, sizeof(Msg),0, &address,sizeof(struct sockaddr));
+  
 }
 
 ///etc/init.d/networking restart
@@ -73,20 +71,14 @@ int main(int argc, char *argv[]){
         int nfd = epoll_wait(epoll,&event,1,-1);
    
         if(event.data.fd == web_fd || event.data.fd == local_fd){
-            int new_client;
-            if(event.data.fd == web_fd){
-                new_client = accept(web_fd,NULL,NULL);
-            }else if(event.data.fd == local_fd){
-                new_client = accept(local_fd,NULL,NULL);
-            }
-            WRITE("Client accepted\n");
-            struct epoll_event event1;
-            event1.events = EPOLLIN;
-            event1.data.fd = new_client;
-             
-            if(epoll_ctl(epoll,EPOLL_CTL_ADD,new_client,&event1)== -1) FAILURE_EXIT("Failed to register client on epoll: %s\n",strerror(errno));
             
-        }else{
+
+            WRITE("Client accepted\n");
+
+
+             
+            
+        
             receiveMessage(event.data.fd);
         }
 
@@ -129,8 +121,12 @@ void *pingClients(void * arg){
 void receiveMessage(int fd){
     
     Msg msg;
-    read(fd,&msg,sizeof(Msg));
-    //WRITE("-> %i\n",msg.type);
+    struct sockaddr address;
+    socklen_t socklen;
+    recvfrom(fd, (void *) &msg, sizeof(Msg),0, (struct sockaddr *)  &address, (socklen_t *)&socklen);
+    
+    
+    WRITE("-> %i\n",msg.type);
     switch(msg.type){
        
         case UNREGISTER:
@@ -142,7 +138,7 @@ void receiveMessage(int fd){
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
                     flag=1;
                     nclients--;
-                    removeSocket(client[i].fd);
+                    removeSocket(fd,address);
                     eraseClient(i);
                     
                     break;
@@ -160,7 +156,7 @@ void receiveMessage(int fd){
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
                     
                     WRITE("Client name exists, kill client\n");
-                    removeSocket(fd);
+                    removeSocket(fd,address);
                     pthread_mutex_unlock(&mutex);
                     return;
                 }
@@ -179,7 +175,8 @@ void receiveMessage(int fd){
 
                     Msg feedback;
                     feedback.type =SUCCESS;
-                    write(fd,&feedback,sizeof(Msg));
+                    sendto(fd, (const void *)&feedback, sizeof(Msg),0, &address,sizeof(struct sockaddr));
+                    
                     break;
                 }   
             }
