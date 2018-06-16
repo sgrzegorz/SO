@@ -68,7 +68,6 @@ int main(int argc, char *argv[]){
     printf("Server starts loop.\n");
 
     while(1){
-        // struct epoll_event event;
        
         struct epoll_event event;
         
@@ -132,11 +131,11 @@ void receiveMessage(int fd){
     
     Msg msg;
     read(fd,&msg,sizeof(Msg));
-    WRITE("-> %i\n",msg.type);
+    //WRITE("-> %i\n",msg.type);
     switch(msg.type){
        
         case UNREGISTER:
-            WRITE("111\n");
+            
             pthread_mutex_lock(&mutex);
             int flag =0;
             for(int i=0;i<MAX_CLIENTS;i++){
@@ -155,12 +154,12 @@ void receiveMessage(int fd){
             pthread_mutex_unlock(&mutex);
             break;
         case REGISTER:
-             WRITE("2222\n");
+            
             
             pthread_mutex_lock(&mutex);
             for(int i=0;i<MAX_CLIENTS;i++){
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
-                    WRITE("%i %i\n",local_fd,fd);
+                    
                     WRITE("Client name exists, kill client\n");
                     removeSocket(fd);
                     pthread_mutex_unlock(&mutex);
@@ -323,13 +322,14 @@ void __init__(int argc, char *argv[]){
         eraseClient(i);
     }
 
-    // pthread_create(&threads[0],NULL,handleTerminal,NULL);
-    // pthread_create(&threads[1],NULL,pingClients,NULL);
+    pthread_create(&threads[0],NULL,handleTerminal,NULL);
+    pthread_create(&threads[1],NULL,pingClients,NULL);
 }
 
 
 void __del__(){
     close(web_fd);
+    close(local_fd);
     for(int i=0;i<MAX_CLIENTS;i++){
         if(client[i].is_active){
             Msg msg;
@@ -339,4 +339,5 @@ void __del__(){
             eraseClient(i);
         }
     }
+    remove(unix_path);
 }

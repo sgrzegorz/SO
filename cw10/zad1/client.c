@@ -101,7 +101,7 @@ void __del__(){
     strcpy(msg.name,name);
     msg.type = UNREGISTER;
     write(socket_fd,&msg,sizeof(Msg));
-    remove(path);
+    
     // if(shutdown(socket_fd,SHUT_RDWR)) printf("Atexit failed to shutdown socket_fd\n");
     // close(socket_fd);
 }
