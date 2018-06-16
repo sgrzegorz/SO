@@ -20,8 +20,9 @@ Client client[MAX_CLIENTS];
 int nclients=0;
 
 //file descriptors
-int server_fd, client_fd, epoll;
+int web_fd, local_fd, epoll;
 struct sockaddr_in server_addr;
+struct sockaddr_un local_address;
 
 pthread_t threads[3];
 
@@ -70,9 +71,9 @@ int main(int argc, char *argv[]){
         struct epoll_event event;
         int nfd = epoll_wait(epoll,&event,1,-1);
 
-        if(event.data.fd == server_fd){
+        if(event.data.fd == web_fd || event.data.fd == local_fd){
             WRITE("Client accepted\n");
-            int new_client = accept(server_fd,NULL,NULL);
+            int new_client = accept(web_fd,NULL,NULL);
             struct epoll_event event1;
             event1.events = EPOLLIN;
             event1.data.fd = new_client;
@@ -84,7 +85,7 @@ int main(int argc, char *argv[]){
 
        
     }
-    close(server_fd);
+    close(web_fd);
 
 }
 
@@ -253,37 +254,45 @@ void __init__(int argc, char *argv[]){
     atexit(__del__);
     srand(time(NULL));
     
-        signal(SIGINT,signalHandler);
-    atexit(__del__);
-    srand(time(NULL));
-    
-    server_fd = socket(AF_INET, SOCK_STREAM,0);
-    if(server_fd == -1)  FAILURE_EXIT("Failed to create communication endpoint\n");
+    //web socket ---------------------------------------------------------------------------
+    if((web_fd = socket(AF_INET, SOCK_STREAM,0)) == -1) FAILURE_EXIT("Failed to create communication endpoint web_fd\n");
 
     int yes=1;
-    if (setsockopt(server_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes)) == -1) {
-        FAILURE_EXIT("setsockopt");
-    }
+    if (setsockopt(web_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes)) == -1) FAILURE_EXIT("setsockopt web_fd\n");
     
-
     memset(&server_addr,'\0',sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(9992);
     server_addr.sin_addr.s_addr = INADDR_ANY;
     
        
-    if(bind(server_fd,(const struct sockaddr*) &server_addr,sizeof(struct sockaddr)) == -1) FAILURE_EXIT("Failed to assign server_addr to a socket: %s\n",strerror(errno));
+    if(bind(web_fd,(const struct sockaddr*) &server_addr,sizeof(struct sockaddr)) == -1) FAILURE_EXIT("Failed to assign server_addr to a web_fd: %s\n",strerror(errno));
 
-    if(listen(server_fd,100) == -1) FAILURE_EXIT("Failed to mark server_fd as a passive socket\n");
+    if(listen(web_fd,100) == -1) FAILURE_EXIT("Failed to mark web_fd as a passive socket\n");
     
+    //Local socket -----------------------------------------------------------------------------
+    if((local_fd = socket(AF_INET, SOCK_STREAM,0)) == -1) FAILURE_EXIT("Failed to create communication endpoint local_fd\n");
+    int yes1=1;
+    if (setsockopt(web_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes1)) == -1) FAILURE_EXIT("setsockopt local");
+    
+    local_address.sun_family = AF_UNIX;    
+ 
+    if(bind(local_fd,(const struct sockaddr*) &local_address,sizeof(struct sockaddr_un)) == -1) FAILURE_EXIT("Failed to assign server_addr to a local_fd: %s\n",strerror(errno));
+
+    if(listen(local_fd,100) == -1) FAILURE_EXIT("Failed to mark local_fd as a passive socket\n");
+    //------------------------------------
 
     epoll = epoll_create1(0);
     if(epoll == -1) FAILURE_EXIT("Failed to create new epoll instance: %s\n",strerror(errno));
 
     struct epoll_event event;
     event.events = EPOLLIN;
-    event.data.fd = server_fd;
-    if(epoll_ctl(epoll,EPOLL_CTL_ADD,server_fd,&event)== -1) FAILURE_EXIT("Failed to register server_fd file descriptor on epoll instance:   %s\n",strerror(errno));
+
+    event.data.fd = web_fd;
+    if(epoll_ctl(epoll,EPOLL_CTL_ADD,web_fd,&event)== -1) FAILURE_EXIT("Failed to register web_fd file descriptor on epoll instance:   %s\n",strerror(errno));
+    event.data.fd = local_fd;
+    if(epoll_ctl(epoll,EPOLL_CTL_ADD,local_fd,&event)== -1) FAILURE_EXIT("Failed to register local_fd file descriptor on epoll instance:   %s\n",strerror(errno));
+
 
     for(int i=0;i<MAX_CLIENTS;i++){
         eraseClient(i);
@@ -295,7 +304,7 @@ void __init__(int argc, char *argv[]){
 
 
 void __del__(){
-    close(server_fd);
+    close(web_fd);
     for(int i=0;i<MAX_CLIENTS;i++){
         if(client[i].is_active){
             Msg msg;
