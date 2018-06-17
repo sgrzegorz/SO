@@ -16,12 +16,13 @@ void registerOnServer(){
     Msg msg;
     strcpy(msg.name,name);
     msg.type = REGISTER;
+    WRITE("f\n");
     write(socket_fd,&msg,sizeof(Msg));
 
     Msg feedback;
  
     read(socket_fd,&feedback,sizeof(Msg));
-
+    WRITE("f\n");
 
     switch(feedback.type){
         case(KILL_CLIENT):

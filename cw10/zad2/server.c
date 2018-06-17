@@ -123,7 +123,7 @@ void receiveMessage(int fd){
     Msg msg;
     struct sockaddr address;
     socklen_t socklen;
-    recvfrom(fd, (void *) &msg, sizeof(Msg),0, (struct sockaddr *)  &address, (socklen_t *)&socklen);
+    if(recvfrom(fd, &msg, sizeof(Msg),0, &address, &socklen) != sizeof(Msg)) WRITE("Not working\n");
     
     
     WRITE("-> %i\n",msg.type);
@@ -176,7 +176,7 @@ void receiveMessage(int fd){
 
                     Msg feedback;
                     feedback.type =SUCCESS;
-                    sendto(fd, &feedback, sizeof(Msg),0, &address,sizeof(struct sockaddr));
+                    sendto(fd, &feedback, sizeof(Msg),0, &address,socklen);
                     
                     break;
                 }   
