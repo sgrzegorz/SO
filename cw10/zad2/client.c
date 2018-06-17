@@ -134,7 +134,7 @@ void __init__(int argc, char *argv[]){
         memset(&address,'\0',sizeof(address));
         
         address.sin_family = AF_INET;
-        address.sin_addr.s_addr = htonl(inet_addr("149.156.124.14");
+        address.sin_addr.s_addr = htonl(inet_addr("149.156.124.14"));
         address.sin_port = port_number;
 
         socket_fd = socket(AF_INET, SOCK_DGRAM,0);
