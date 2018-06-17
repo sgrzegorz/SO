@@ -123,8 +123,7 @@ void __init__(int argc, char *argv[]){
         port = atoi(argv[4]);
         
         int res;
-        socket_fd = socket(AF_INET, SOCK_DGRAM,0);
-        if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
+
 
         uint32_t ip = inet_addr(argv[3]); // this code I get when I type "what is my ip?" in internet
         if(ip == -1) FAILURE_EXIT("Failed to convert ip address: %s\n",strerror(errno));
@@ -135,8 +134,11 @@ void __init__(int argc, char *argv[]){
         memset(&address,'\0',sizeof(address));
         
         address.sin_family = AF_INET;
-        address.sin_addr.s_addr = htonl(INADDR_ANY);
+        address.sin_addr.s_addr = htonl(inet_addr("149.156.124.14");
         address.sin_port = port_number;
+
+        socket_fd = socket(AF_INET, SOCK_DGRAM,0);
+        if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
 
         if(connect(socket_fd, (const struct sockaddr*) &address, sizeof(struct sockaddr)) == -1) FAILURE_EXIT("Failed to assign server_addr to a web_fd: %s\n",strerror(errno));
 
