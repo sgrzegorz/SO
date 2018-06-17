@@ -49,7 +49,7 @@ void eraseClient(int i){
 
 }
 
-void removeSocket(int fd,struct sockaddr &address){
+void removeSocket(int fd,struct sockaddr address){
     Msg feedback;
     feedback.type = KILL_CLIENT;
     sendto(fd, (const void *)&feedback, sizeof(Msg),0, &address,sizeof(struct sockaddr));
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
         if(event.data.fd == web_fd || event.data.fd == local_fd){
             
 
-            WRITE("Client accepted\n");
+            
         
             receiveMessage(event.data.fd);
 
@@ -95,7 +95,7 @@ void *pingClients(void * arg){
                 client[i].ponged =0;
                 Msg msg;
                 msg.type =PING;
-                sendto(client[i].fd, (const void *)&msg, sizeof(Msg),0, &address,sizeof(struct sockaddr));
+                sendto(client[i].fd, (const void *)&msg, sizeof(Msg),0, &client[i].address,sizeof(struct sockaddr));
 
             }
         }
@@ -118,6 +118,7 @@ void *pingClients(void * arg){
 
 
 void receiveMessage(int fd){
+    
     
     Msg msg;
     struct sockaddr address;
@@ -175,7 +176,7 @@ void receiveMessage(int fd){
 
                     Msg feedback;
                     feedback.type =SUCCESS;
-                    sendto(fd, (const void *)&feedback, sizeof(Msg),0, &address,sizeof(struct sockaddr));
+                    sendto(fd, &feedback, sizeof(Msg),0, &address,sizeof(struct sockaddr));
                     
                     break;
                 }   
@@ -215,7 +216,7 @@ void *handleTerminal(void * arg){
         char type;
        
         scanf(" %c %i %i",&type,&msg.arg1,&msg.arg2);
-       
+        WRITE("jeek\n");
         switch(type){
             case '+':
                 msg.type = ADD;
@@ -247,8 +248,9 @@ void *handleTerminal(void * arg){
         for(int i=0;i<MAX_CLIENTS;i++){
             if(client[i].is_active){
                 if(k == who){
+                    
+                    sendto(client[i].fd, (const void *)&msg, sizeof(Msg),0, &client[i].address,sizeof(struct sockaddr));
 
-                    write(client[i].fd,&msg,sizeof(Msg));
                     break;
                 }
                 k++;
