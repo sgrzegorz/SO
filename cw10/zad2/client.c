@@ -22,7 +22,7 @@ void registerOnServer(){
     Msg feedback;
  
     read(socket_fd,&feedback,sizeof(Msg));
-    WRITE("f\n");
+    WRITE("f %s\n",msg.name);
 
     switch(feedback.type){
         case(KILL_CLIENT):

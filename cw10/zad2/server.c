@@ -73,11 +73,10 @@ int main(int argc, char *argv[]){
    
         if(event.data.fd == web_fd || event.data.fd == local_fd){
             
-
-            
-        
             receiveMessage(event.data.fd);
 
+        }else{
+            WRITE("WHAT?\n");
         }
 
        
