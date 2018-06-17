@@ -176,7 +176,7 @@ void receiveMessage(int fd){
 
                     Msg feedback;
                     feedback.type =SUCCESS;
-                    sendto(fd, &feedback, sizeof(Msg),0, &address,socklen);
+                    if(sendto(fd, &feedback, sizeof(Msg),0, &address,sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("Failed sending %s\n",strerror(errno));
                     
                     break;
                 }   
