@@ -7,10 +7,12 @@
 
 typedef struct{
     int is_active;
-    struct sockaddr address;
+    struct sockaddr msg_addr;
     char name[MAX_ARRAY];
     int ponged;
     int fd;
+    socklen_t addrsize;
+    
 }Client;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
@@ -24,6 +26,11 @@ int nclients=0;
 int web_fd, local_fd, epoll;
 struct sockaddr_in server_addr;
 struct sockaddr_un local_address;
+
+Msg msg;
+struct sockaddr msg_addr;
+socklen_t addrsize;
+
 
 pthread_t threads[3];
 char unix_path[MAX_ARRAY];
@@ -49,10 +56,10 @@ void eraseClient(int i){
 
 }
 
-void removeSocket(int fd,struct sockaddr address){
-    Msg feedback;
-    feedback.type = KILL_CLIENT;
-    sendto(fd, (const void *)&feedback, sizeof(Msg),0, &address,sizeof(struct sockaddr));
+void removeSocket(int fd,struct sockaddr address,socklen_t addrsize){
+    
+    msg.type = KILL_CLIENT;
+    sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize);
   
 }
 
@@ -94,7 +101,7 @@ void *pingClients(void * arg){
                 client[i].ponged =0;
                 Msg msg;
                 msg.type =PING;
-                sendto(client[i].fd, (const void *)&msg, sizeof(Msg),0, &client[i].address,sizeof(struct sockaddr));
+                sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, client[i].addrsize);
 
             }
         }
@@ -105,7 +112,7 @@ void *pingClients(void * arg){
         pthread_mutex_lock(&ping_mutex);        
         for(int i=0;i<MAX_CLIENTS;i++){
             if(client[i].is_active && client[i].ponged ==0){
-                removeSocket(client[i].fd,client[i].address);
+                removeSocket(client[i].fd,client[i].msg_addr,client[i].addrsize);
                 eraseClient(i);
             }
         }
@@ -119,11 +126,8 @@ void *pingClients(void * arg){
 void receiveMessage(int fd){
     
     
-    Msg msg;
-    struct sockaddr address;
-    socklen_t socklen;
-    if(recvfrom(fd, &msg, sizeof(Msg),0, &address, &socklen) != sizeof(Msg)) WRITE("Not working\n");
     
+    recvfrom(fd,&msg,sizeof(Msg),0 ,&msg_addr, &addrsize);    
     
     WRITE("-> %i\n",msg.type);
     switch(msg.type){
@@ -137,7 +141,7 @@ void receiveMessage(int fd){
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
                     flag=1;
                     nclients--;
-                    removeSocket(fd,address);
+                    removeSocket(fd,client[i].msg_addr,client[i].addrsize);
                     eraseClient(i);
                     
                     break;
@@ -155,7 +159,9 @@ void receiveMessage(int fd){
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
                     
                     WRITE("Client name exists, kill client\n");
-                    removeSocket(fd,address);
+                    msg.type = KILL_CLIENT;
+                    sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize);
+                    
                     pthread_mutex_unlock(&mutex);
                     return;
                 }
@@ -164,18 +170,18 @@ void receiveMessage(int fd){
             int client_registered_successfully = 0;
             for(int i=0;i<MAX_CLIENTS;i++){
                 if(client[i].is_active == 0){
-                    client[i].address = address;
+                    client[i].msg_addr = msg_addr;
                     client[i].is_active=1;
                     client[i].ponged=1;
                     client[i].fd = fd;
+                    client[i].addrsize = addrsize;
                     strcpy(client[i].name,msg.name);
                     nclients++;
                     WRITE("Client: %s registered successfully\n",client[i].name);
                     client_registered_successfully=1;
-
-                    Msg feedback;
-                    feedback.type =SUCCESS;
-                    if(sendto(fd, &feedback, sizeof(Msg),0, &address,sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("Failed sending %s\n",strerror(errno));
+              
+                    msg.type =SUCCESS;
+                    sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize);
                     
                     break;
                 }   
@@ -241,14 +247,16 @@ void *handleTerminal(void * arg){
             continue;
         } 
 
-        
+
+
+        WRITE("J\n");
         int who = rand()%nclients;
         int k=0;
         for(int i=0;i<MAX_CLIENTS;i++){
             if(client[i].is_active){
                 if(k == who){
                     
-                    sendto(client[i].fd, (const void *)&msg, sizeof(Msg),0, &client[i].address,sizeof(struct sockaddr));
+                    sendto(client[i].fd, (const void *)&msg, sizeof(Msg),0, &client[i].msg_addr,sizeof(struct sockaddr));
 
                     break;
                 }
@@ -275,16 +283,14 @@ void __init__(int argc, char *argv[]){
     
     //web socket ---------------------------------------------------------------------------
     if((web_fd = socket(AF_INET, SOCK_DGRAM,0)) == -1) FAILURE_EXIT("Failed to create communication endpoint web_fd\n");
-
     int yes=1;
     if (setsockopt(web_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes)) == -1) FAILURE_EXIT("setsockopt web_fd\n");
     
-    memset(&server_addr,'\0',sizeof(server_addr));
+    
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port_number);
+    server_addr.sin_port = htons(9992);
     server_addr.sin_addr.s_addr = INADDR_ANY;
     
-       
     if(bind(web_fd,(const struct sockaddr*) &server_addr,sizeof(struct sockaddr)) == -1) FAILURE_EXIT("Failed to assign server_addr to a web_fd: %s\n",strerror(errno));
 
 
@@ -303,12 +309,11 @@ void __init__(int argc, char *argv[]){
 
     epoll = epoll_create1(0);
     if(epoll == -1) FAILURE_EXIT("Failed to create new epoll instance: %s\n",strerror(errno));
-
     struct epoll_event event;
     event.events = EPOLLIN;
-
     event.data.fd = web_fd;
     if(epoll_ctl(epoll,EPOLL_CTL_ADD,web_fd,&event)== -1) FAILURE_EXIT("Failed to register web_fd file descriptor on epoll instance:   %s\n",strerror(errno));
+
     event.data.fd = local_fd;
     if(epoll_ctl(epoll,EPOLL_CTL_ADD,local_fd,&event)== -1) FAILURE_EXIT("Failed to register local_fd file descriptor on epoll instance:   %s\n",strerror(errno));
 
@@ -329,7 +334,7 @@ void __del__(){
         if(client[i].is_active){
             Msg msg;
             msg.type = KILL_CLIENT;
-            sendto(client[i].fd, (const void *)&msg, sizeof(Msg),0, &client[i].address,sizeof(struct sockaddr));
+            sendto(client[i].fd, (const void *)&msg, sizeof(Msg),0, &client[i].msg_addr,sizeof(struct sockaddr));
 
             eraseClient(i);
         }
