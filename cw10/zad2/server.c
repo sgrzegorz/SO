@@ -219,6 +219,7 @@ void receiveMessage(int fd){
                     if(fd ==web_fd){
                         if(sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto6 %s\n",strerror(errno));
                     }else{
+                       
                         if(write(fd,&msg,sizeof(Msg)!=sizeof(Msg))) FAILURE_EXIT("write3 %s\n",strerror(errno));
                     }
                    

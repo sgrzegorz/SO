@@ -24,8 +24,8 @@ void registerOnServer(){
         if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto1 %s\n",strerror(errno));    
         if(recvfrom(socket_fd,&msg,sizeof(Msg),0 ,0,0) !=sizeof(Msg)) WRITE("recvform\n");  
     }else{
-        write(socket_fd,&msg,sizeof(Msg));
-        read(socket_fd,&msg,sizeof(Msg));
+        if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write0\n");
+        if(read(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("read0\n");
     }
    
    
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]){
         if(connection == LAN){
             if(recvfrom(socket_fd,&msg,sizeof(Msg),0 ,0,0) !=sizeof(Msg)) WRITE("recvform1\n");  
         }else{
-            read(socket_fd,&msg,sizeof(Msg));
+            if(read(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("read1\n");
         }
         
         
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]){
                 if(connection == LAN){
                     if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
                 }else{
-                    write(socket_fd,&msg,sizeof(Msg));
+                    if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write2\n");
                 }
                   
 
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]){
                 if(connection == LAN){
                     if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
                 }else{
-                    write(socket_fd,&msg,sizeof(Msg));
+                    if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write3\n");
                 }
                 break;
 
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]){
                 if(connection == LAN){
                     if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
                 }else{
-                    write(socket_fd,&msg,sizeof(Msg));
+                    if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write4\n");
                 }
                 break;
 
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]){
                 if(connection == LAN){
                     if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");    
                 }else{
-                    write(socket_fd,&msg,sizeof(Msg));
+                    if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write5\n");
                 }
                 
 
@@ -126,7 +126,7 @@ int main(int argc, char *argv[]){
                  if(connection == LAN){
                     if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");     
                 }else{
-                    write(socket_fd,&msg,sizeof(Msg));
+                    if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write6\n");
                 }
                 
 
@@ -150,7 +150,7 @@ void __del__(){
     if(connection == LAN){
         if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
     }else{
-        write(socket_fd,&msg,sizeof(Msg));
+        if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write7\n");
     }
     
     // if(shutdown(socket_fd,SHUT_RDWR)) printf("Atexit failed to shutdown socket_fd\n");
