@@ -22,11 +22,12 @@ void registerOnServer(){
     strcpy(msg.name,name);
     msg.type = REGISTER;
     if(connection==LAN){
-        if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto1 %s\n",strerror(errno));    
+        if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_in,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto1- %s\n",strerror(errno));    
         if(recvfrom(socket_fd,&msg,sizeof(Msg),0 ,0,0) !=sizeof(Msg)) WRITE("recvform\n");  
     }else{
-        if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write0\n");
-        if(read(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("read0\n");
+
+        if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_un,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto1 %s\n",strerror(errno));    
+        if(recvfrom(socket_fd,&msg,sizeof(Msg),0 ,0,0) !=sizeof(Msg)) WRITE("recvform\n");
     }
    
    
@@ -54,11 +55,9 @@ int main(int argc, char *argv[]){
     while(1){
         
         Msg msg;
-        if(connection == LAN){
-            if(recvfrom(socket_fd,&msg,sizeof(Msg),0 ,0,0) !=sizeof(Msg)) WRITE("recvform1\n");  
-        }else{
-            if(read(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("read1\n");
-        }
+        
+        if(recvfrom(socket_fd,&msg,sizeof(Msg),0 ,0,0) !=sizeof(Msg)) WRITE("recvform1\n");  
+       
         
         
        // read(socket_fd,&msg,sizeof(Msg));
@@ -72,9 +71,10 @@ int main(int argc, char *argv[]){
                 msg.result = msg.arg1 * msg.arg2;
                 
                 if(connection == LAN){
-                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
+                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_in,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
                 }else{
-                    if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write2\n");
+                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_un,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
+
                 }
                   
 
@@ -85,9 +85,10 @@ int main(int argc, char *argv[]){
                 msg.result = msg.arg1 + msg.arg2;
 
                 if(connection == LAN){
-                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
+                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_in,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
                 }else{
-                    if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write3\n");
+                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_un,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
+
                 }
                 break;
 
@@ -98,9 +99,9 @@ int main(int argc, char *argv[]){
                   
 
                 if(connection == LAN){
-                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
+                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_in,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
                 }else{
-                    if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write4\n");
+                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_un,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
                 }
                 break;
 
@@ -108,10 +109,11 @@ int main(int argc, char *argv[]){
                          
                 msg.type = RESULT;
                 msg.result = msg.arg1 - msg.arg2;
+            
                 if(connection == LAN){
-                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");    
+                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_in,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
                 }else{
-                    if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write5\n");
+                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_un,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
                 }
                 
 
@@ -124,10 +126,11 @@ int main(int argc, char *argv[]){
             case PING:
                 strcpy(msg.name,name);
                 msg.type = PONG;
-                 if(connection == LAN){
-                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");     
+                
+                if(connection == LAN){
+                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_in,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
                 }else{
-                    if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write6\n");
+                    if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_un,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
                 }
                 
 
@@ -149,9 +152,9 @@ void __del__(){
        
 
     if(connection == LAN){
-        if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
+        if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_in,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
     }else{
-        if(write(socket_fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write7\n");
+        if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr_un,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");  
     }
     
     // if(shutdown(socket_fd,SHUT_RDWR)) printf("Atexit failed to shutdown socket_fd\n");
@@ -174,34 +177,33 @@ void __init__(int argc, char *argv[]){
         connection = LAN;
        
         
-        
-
         uint32_t ip = inet_addr(argv[3]); // this code I get when I type "what is my ip?" in internet
         if(ip == -1) FAILURE_EXIT("Failed to convert ip to byte order network address: %s\n",strerror(errno));
        
-        msg_addr.sin_family = AF_INET;    
-        msg_addr.sin_addr.s_addr =INADDR_ANY;
+        msg_addr_in.sin_family = AF_INET;    
+        msg_addr_in.sin_addr.s_addr =INADDR_ANY;
         int port = atoi(argv[4]);
         if (port < 1024 || port> 65535)  FAILURE_EXIT("Incorrect number of port\n");
-        msg_addr.sin_port = htons(atoi(argv[4]));
+        msg_addr_in.sin_port = htons(atoi(argv[4]));
 
         socket_fd = socket(AF_INET, SOCK_DGRAM,0);
         if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
-        bind(socket_fd,(struct sockaddr*) &msg_addr,sizeof(sa_family_t));//mega wazne !!!
-        if(connect(socket_fd, (const struct sockaddr*) &msg_addr, sizeof(struct sockaddr)) == -1) FAILURE_EXIT("Failed to assign server_addr to a web_fd: %s\n",strerror(errno));
+        bind(socket_fd,(struct sockaddr*) &msg_addr_in,sizeof(sa_family_t));//mega wazne !!!
+        if(connect(socket_fd, (const struct sockaddr*) &msg_addr_in, sizeof(struct sockaddr)) == -1) FAILURE_EXIT("Failed to assign server_addr to a web_fd: %s\n",strerror(errno));
         
     }else if(strcmp(argv[2],"unix")==0 && argc == 4){
         strcpy(name,argv[1]);
         path = argv[3];
         connection = UNIX;
-        struct sockaddr_un local_address;
-        local_address.sun_family = AF_UNIX;
-        strcpy(local_address.sun_path,path);
+        
+        msg_addr_un.sun_family = AF_UNIX;
+        strcpy(msg_addr_un.sun_path,path);
 
         socket_fd = socket(AF_UNIX, SOCK_DGRAM,0);
         if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
 
-        int res = connect(socket_fd,(const struct sockaddr*) &local_address, sizeof(local_address));
+        bind(socket_fd,(struct sockaddr*) &msg_addr_un,sizeof(sa_family_t));
+        int res = connect(socket_fd,(const struct sockaddr*) &msg_addr_un, sizeof(msg_addr_un));
         if(res == -1) FAILURE_EXIT("Failed in connecting to server_socket unix: %s\n",strerror(errno));
     
 
