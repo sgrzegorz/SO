@@ -168,7 +168,7 @@ void receiveMessage(int fd){
                          if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto10 %s\n",strerror(errno));
 
                     }else{
-                        if(write(fd,&msg,sizeof(Msg)!=sizeof(Msg))) FAILURE_EXIT("write1\n");
+                        if(write(client[i].fd,&msg,sizeof(Msg)!=sizeof(Msg))) FAILURE_EXIT("write1\n");
                     }
                 
                     eraseClient(i);
@@ -219,7 +219,7 @@ void receiveMessage(int fd){
                     if(fd ==web_fd){
                         if(sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto6 %s\n",strerror(errno));
                     }else{
-                        if(write(fd,&msg,sizeof(Msg)!=sizeof(Msg))) FAILURE_EXIT("write3");
+                        if(write(fd,&msg,sizeof(Msg)!=sizeof(Msg))) FAILURE_EXIT("write3 %s\n",strerror(errno));
                     }
                    
                   
