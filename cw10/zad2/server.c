@@ -93,6 +93,11 @@ int main(int argc, char *argv[]){
 }
 
 void *pingClients(void * arg){
+    Msg msg;
+    struct sockaddr msg_addr;
+    socklen_t addrsize;
+
+
     while(1){
         
         pthread_mutex_lock(&ping_mutex);
@@ -101,7 +106,7 @@ void *pingClients(void * arg){
                 client[i].ponged =0;
                 Msg msg;
                 msg.type =PING;
-                sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, client[i].addrsize);
+                if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto1\n");
 
             }
         }
@@ -124,8 +129,10 @@ void *pingClients(void * arg){
 
 
 void receiveMessage(int fd){
-    
-    
+    Msg msg;
+    struct sockaddr msg_addr;
+    socklen_t addrsize;
+
     
     recvfrom(fd,&msg,sizeof(Msg),0 ,&msg_addr, &addrsize);    
     
@@ -160,7 +167,7 @@ void receiveMessage(int fd){
                     
                     WRITE("Client name exists, kill client\n");
                     msg.type = KILL_CLIENT;
-                    sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize);
+                    if(sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto2\n");
                     
                     pthread_mutex_unlock(&mutex);
                     return;
@@ -180,8 +187,12 @@ void receiveMessage(int fd){
                     WRITE("Client: %s registered successfully\n",client[i].name);
                     client_registered_successfully=1;
               
+                    strcpy(msg.name, "registered\n");
                     msg.type =SUCCESS;
-                    sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize);
+
+                    if(sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto6 %s\n",strerror(errno));
+                    
+                    
                     
                     break;
                 }   
@@ -215,6 +226,9 @@ void receiveMessage(int fd){
 
 
 void *handleTerminal(void * arg){
+    
+
+
     while(1){
         
         Msg msg;
@@ -256,7 +270,7 @@ void *handleTerminal(void * arg){
             if(client[i].is_active){
                 if(k == who){
                     
-                    sendto(client[i].fd, (const void *)&msg, sizeof(Msg),0, &client[i].msg_addr,sizeof(struct sockaddr));
+                    sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize);
 
                     break;
                 }
@@ -329,12 +343,15 @@ void __init__(int argc, char *argv[]){
 
 
 void __del__(){
+    Msg msg;
+    struct sockaddr msg_addr;
+    socklen_t addrsize;
    
     for(int i=0;i<MAX_CLIENTS;i++){
         if(client[i].is_active){
             Msg msg;
             msg.type = KILL_CLIENT;
-            sendto(client[i].fd, (const void *)&msg, sizeof(Msg),0, &client[i].msg_addr,sizeof(struct sockaddr));
+            if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto3\n");
 
             eraseClient(i);
         }
