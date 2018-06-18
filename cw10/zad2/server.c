@@ -100,7 +100,7 @@ void *pingClients(void * arg){
                 if(client[i].fd ==web_fd){
                     if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto36\n");
                 }else{
-                    write(client[i].fd,&msg,sizeof(Msg));
+                    if(write(client[i].fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write0\n");
                 }
               
 
@@ -121,7 +121,7 @@ void *pingClients(void * arg){
                     if(client[i].fd ==web_fd){
                         if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto10 %s\n",strerror(errno));
                     }else{
-                        write(client[i].fd,&msg,sizeof(Msg));
+                        if(write(client[i].fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write10\n");
                     }
                     
                 }
@@ -144,7 +144,7 @@ void receiveMessage(int fd){
     if(fd == web_fd){
         recvfrom(fd,&msg,sizeof(Msg),0 ,&msg_addr, &addrsize); 
     }else{
-        read(fd,&msg,sizeof(Msg));
+        if(read(fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("read!!!\n");
     }
        
     if(msg.type!=PONG)WRITE("Received message from client %s\n",msg.name);
@@ -168,7 +168,7 @@ void receiveMessage(int fd){
                          if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto10 %s\n",strerror(errno));
 
                     }else{
-                        write(fd,&msg,sizeof(Msg));
+                        if(write(fd,&msg,sizeof(Msg)!=sizeof(Msg))) FAILURE_EXIT("write1\n");
                     }
                 
                     eraseClient(i);
@@ -192,7 +192,7 @@ void receiveMessage(int fd){
                     if(fd == web_fd){
                         if(sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto2\n");
                     }else{
-                        write(fd,&msg,sizeof(Msg));
+                        if(write(fd,&msg,sizeof(Msg)!=sizeof(Msg))) FAILURE_EXIT("write2\n");
                     }
                     
                     pthread_mutex_unlock(&mutex);
@@ -219,7 +219,7 @@ void receiveMessage(int fd){
                     if(fd ==web_fd){
                         if(sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto6 %s\n",strerror(errno));
                     }else{
-                        write(fd,&msg,sizeof(Msg));
+                        if(write(fd,&msg,sizeof(Msg)!=sizeof(Msg))) FAILURE_EXIT("write3");
                     }
                    
                   
@@ -303,7 +303,8 @@ void *handleTerminal(void * arg){
                     if(client[i].fd == web_fd){
                         if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto36\n");
                     }else{
-                        write(client[i].fd,&msg,sizeof(Msg));
+                        if(write(client[i].fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write5\n");
+                        
                     }
 
                     break;
@@ -387,7 +388,7 @@ void __del__(){
             if(client[i].fd == web_fd){
                 if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto3\n");
             }else{
-                write(client[i].fd,&msg,sizeof(Msg));
+                if(write(client[i].fd,&msg,sizeof(Msg))!=sizeof(Msg)) FAILURE_EXIT("write6\n");
             }
 
             eraseClient(i);
