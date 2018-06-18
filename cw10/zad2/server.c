@@ -135,7 +135,7 @@ void receiveMessage(int fd){
 
     
     recvfrom(fd,&msg,sizeof(Msg),0 ,&msg_addr, &addrsize);    
-    
+    WRITE("Received message from client %s\n",msg.name);
     WRITE("-> %i\n",msg.type);
     switch(msg.type){
        
@@ -177,11 +177,12 @@ void receiveMessage(int fd){
             int client_registered_successfully = 0;
             for(int i=0;i<MAX_CLIENTS;i++){
                 if(client[i].is_active == 0){
-                    client[i].msg_addr = msg_addr;
+                    
                     client[i].is_active=1;
                     client[i].ponged=1;
                     client[i].fd = fd;
                     client[i].addrsize = addrsize;
+                    client[i].msg_addr = msg_addr;
                     strcpy(client[i].name,msg.name);
                     nclients++;
                     WRITE("Client: %s registered successfully\n",client[i].name);
@@ -337,8 +338,8 @@ void __init__(int argc, char *argv[]){
         eraseClient(i);
     }
 
-    pthread_create(&threads[0],NULL,handleTerminal,NULL);
-    pthread_create(&threads[1],NULL,pingClients,NULL);
+   // pthread_create(&threads[0],NULL,handleTerminal,NULL);
+   // pthread_create(&threads[1],NULL,pingClients,NULL);
 }
 
 
