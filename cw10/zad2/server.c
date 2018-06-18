@@ -76,7 +76,7 @@ int main(int argc, char *argv[]){
     while(1){
        
         struct epoll_event event;
-        int nfd = epoll_wait(epoll,&event,1,-1);
+        epoll_wait(epoll,&event,1,-1);
    
         if(event.data.fd == web_fd || event.data.fd == local_fd){
             
@@ -93,11 +93,8 @@ int main(int argc, char *argv[]){
 }
 
 void *pingClients(void * arg){
-    Msg msg;
-    struct sockaddr msg_addr;
-    socklen_t addrsize;
-
-
+    
+    
     while(1){
         
         pthread_mutex_lock(&ping_mutex);
@@ -131,7 +128,7 @@ void *pingClients(void * arg){
 void receiveMessage(int fd){
     Msg msg;
     struct sockaddr msg_addr;
-    socklen_t addrsize;
+    socklen_t addrsize = sizeof(msg_addr);//JEBANIE KURWA WAŻNA LINIJKA
 
     
     recvfrom(fd,&msg,sizeof(Msg),0 ,&msg_addr, &addrsize);    
@@ -338,15 +335,14 @@ void __init__(int argc, char *argv[]){
         eraseClient(i);
     }
 
-   // pthread_create(&threads[0],NULL,handleTerminal,NULL);
-   // pthread_create(&threads[1],NULL,pingClients,NULL);
+    pthread_create(&threads[0],NULL,handleTerminal,NULL);
+    pthread_create(&threads[1],NULL,pingClients,NULL);
 }
 
 
 void __del__(){
-    Msg msg;
-    struct sockaddr msg_addr;
-    socklen_t addrsize;
+   
+    
    
     for(int i=0;i<MAX_CLIENTS;i++){
         if(client[i].is_active){
