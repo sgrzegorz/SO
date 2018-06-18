@@ -186,7 +186,7 @@ void __init__(int argc, char *argv[]){
 
         socket_fd = socket(AF_INET, SOCK_DGRAM,0);
         if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
-
+        bind(socket_fd,(struct sockaddr*) &msg_addr,sizeof(sa_family_t));//mega wazne !!!
         if(connect(socket_fd, (const struct sockaddr*) &msg_addr, sizeof(struct sockaddr)) == -1) FAILURE_EXIT("Failed to assign server_addr to a web_fd: %s\n",strerror(errno));
         
     }else if(strcmp(argv[2],"unix")==0 && argc == 4){
