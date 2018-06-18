@@ -47,9 +47,11 @@ int main(int argc, char *argv[]){
     while(1){
         
         Msg msg;
-        read(socket_fd,&msg,sizeof(Msg));
+        if(recvfrom(socket_fd,&msg,sizeof(Msg),0 ,0,0) !=sizeof(Msg)) WRITE("recvform1\n");  
+        
+       // read(socket_fd,&msg,sizeof(Msg));
         if(msg.type!=PING) WRITE("Msg received\n");
-         
+        if(msg.type==PING) WRITE("Ping\n");
        
         switch(msg.type){
             case MUL:
@@ -88,6 +90,7 @@ int main(int argc, char *argv[]){
                 break;
 
             case PING:
+                strcpy(msg.name,name);
                 msg.type = PONG;
                 if(sendto(socket_fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr,(socklen_t) sizeof(struct sockaddr))!=sizeof(Msg)) WRITE("sendto\n");    
 
@@ -128,7 +131,7 @@ void __init__(int argc, char *argv[]){
         strcpy(name,argv[1]);
         port = atoi(argv[4]);
         
-        int res;
+        
 
         uint32_t ip = inet_addr(argv[3]); // this code I get when I type "what is my ip?" in internet
         if(ip == -1) FAILURE_EXIT("Failed to convert ip address: %s\n",strerror(errno));

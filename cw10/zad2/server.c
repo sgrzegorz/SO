@@ -15,6 +15,7 @@ typedef struct{
     
 }Client;
 
+int verbose =1;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
 pthread_mutex_t ping_mutex = PTHREAD_MUTEX_INITIALIZER; 
 
@@ -27,9 +28,6 @@ int web_fd, local_fd, epoll;
 struct sockaddr_in server_addr;
 struct sockaddr_un local_address;
 
-Msg msg;
-struct sockaddr msg_addr;
-socklen_t addrsize;
 
 
 pthread_t threads[3];
@@ -51,17 +49,14 @@ void eraseClient(int i){
     
     strcpy(client[i].name,"unknown");
     client[i].is_active =0;
-    client[i].ponged =1;
+    client[i].ponged =-1;
     client[i].fd =-1;
+    strcpy(client[i].name ,"Unknown");
+    client[i].addrsize =-1;
 
 }
 
-void removeSocket(int fd,struct sockaddr address,socklen_t addrsize){
-    
-    msg.type = KILL_CLIENT;
-    sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize);
-  
-}
+
 
 ///etc/init.d/networking restart
 
@@ -100,10 +95,12 @@ void *pingClients(void * arg){
         pthread_mutex_lock(&ping_mutex);
         for(int i=0;i<MAX_CLIENTS;i++){
             if(client[i].is_active){
+                if(verbose) WRITE("Delete pinging %s\n",client[i].name);
                 client[i].ponged =0;
                 Msg msg;
                 msg.type =PING;
-                if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto1\n");
+                if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto36\n");
+
 
             }
         }
@@ -114,7 +111,15 @@ void *pingClients(void * arg){
         pthread_mutex_lock(&ping_mutex);        
         for(int i=0;i<MAX_CLIENTS;i++){
             if(client[i].is_active && client[i].ponged ==0){
-                removeSocket(client[i].fd,client[i].msg_addr,client[i].addrsize);
+                if(verbose) WRITE("Kill because not responding %s\n",client[i].name);
+                //remove socket
+                Msg msg;
+                msg.type = KILL_CLIENT;
+                for(int i=0;i<1;i++){
+                    if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto10 %s\n",strerror(errno));
+
+                }
+     
                 eraseClient(i);
             }
         }
@@ -132,8 +137,8 @@ void receiveMessage(int fd){
 
     
     recvfrom(fd,&msg,sizeof(Msg),0 ,&msg_addr, &addrsize);    
-    WRITE("Received message from client %s\n",msg.name);
-    WRITE("-> %i\n",msg.type);
+    if(msg.type!=PONG)WRITE("Received message from client %s\n",msg.name);
+    
     switch(msg.type){
        
         case UNREGISTER:
@@ -145,13 +150,18 @@ void receiveMessage(int fd){
                 if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
                     flag=1;
                     nclients--;
-                    removeSocket(fd,client[i].msg_addr,client[i].addrsize);
+
+        
+                    //remove socket
+                    msg.type = KILL_CLIENT;
+                    if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto10 %s\n",strerror(errno));
+
                     eraseClient(i);
                     
                     break;
                 }
             }
-            if(!flag) FAILURE_EXIT("Client couldn't unregister magic???\n");
+            if(!flag) WRITE("ok\n");
 
             pthread_mutex_unlock(&mutex);
             break;
@@ -190,7 +200,7 @@ void receiveMessage(int fd){
 
                     if(sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto6 %s\n",strerror(errno));
                     
-                    
+                     //if(sendto(fd,&msg,sizeof(Msg),0 ,&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto6 %s\n",strerror(errno));
                     
                     break;
                 }   
@@ -205,8 +215,9 @@ void receiveMessage(int fd){
 
         case PONG:
             pthread_mutex_lock(&mutex);
+            if(verbose) WRITE("Received pong %s\n",msg.name);
             for(int i=0;i<MAX_CLIENTS;i++){
-                if(client[i].is_active && client[i].fd == fd){
+                if(client[i].is_active && strcmp(client[i].name,msg.name)==0){
                     client[i].ponged =1;
                     break;
                 }
@@ -233,7 +244,7 @@ void *handleTerminal(void * arg){
         char type;
        
         scanf(" %c %i %i",&type,&msg.arg1,&msg.arg2);
-        WRITE("jeek\n");
+        
         switch(type){
             case '+':
                 msg.type = ADD;
@@ -261,14 +272,14 @@ void *handleTerminal(void * arg){
 
 
 
-        WRITE("J\n");
+        
         int who = rand()%nclients;
         int k=0;
         for(int i=0;i<MAX_CLIENTS;i++){
             if(client[i].is_active){
                 if(k == who){
                     
-                    sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize);
+                    if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto36\n");
 
                     break;
                 }
@@ -335,7 +346,7 @@ void __init__(int argc, char *argv[]){
         eraseClient(i);
     }
 
-    pthread_create(&threads[0],NULL,handleTerminal,NULL);
+  //  pthread_create(&threads[0],NULL,handleTerminal,NULL);
     pthread_create(&threads[1],NULL,pingClients,NULL);
 }
 
@@ -348,7 +359,7 @@ void __del__(){
         if(client[i].is_active){
             Msg msg;
             msg.type = KILL_CLIENT;
-            if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto3\n");
+            if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto3\n");
 
             eraseClient(i);
         }
