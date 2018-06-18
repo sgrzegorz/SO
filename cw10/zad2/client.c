@@ -129,19 +129,18 @@ void __init__(int argc, char *argv[]){
     
     if(strcmp(argv[2],"lan")==0 && argc == 5){
         strcpy(name,argv[1]);
-        port = atoi(argv[4]);
+       
         
         
 
         uint32_t ip = inet_addr(argv[3]); // this code I get when I type "what is my ip?" in internet
-        if(ip == -1) FAILURE_EXIT("Failed to convert ip address: %s\n",strerror(errno));
-        uint16_t port_number = htons(port);
-        if (port_number < 1024 || port_number > 65535)  FAILURE_EXIT("Incorrect number of port\n");
-
+        if(ip == -1) FAILURE_EXIT("Failed to convert ip to byte order network address: %s\n",strerror(errno));
        
         msg_addr.sin_family = AF_INET;    
         msg_addr.sin_addr.s_addr =INADDR_ANY;
-        msg_addr.sin_port = htons(9992);
+        int port = atoi(argv[4]);
+        if (port < 1024 || port> 65535)  FAILURE_EXIT("Incorrect number of port\n");
+        msg_addr.sin_port = htons(atoi(argv[4]));
 
         socket_fd = socket(AF_INET, SOCK_DGRAM,0);
         if(socket_fd == -1) FAILURE_EXIT("Failed to create client socket\n");
