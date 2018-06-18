@@ -5,7 +5,8 @@ char name[MAX_ARRAY];
 char *ip;
 int port;
 char *path;
-struct sockaddr_in msg_addr;
+struct sockaddr_in msg_addr_in;
+struct sockaddr_un msg_addr_un;
 Msg msg;
 
 void __del__();
