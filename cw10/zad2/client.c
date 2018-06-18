@@ -22,7 +22,7 @@ void registerOnServer(){
 
  
     if(recvfrom(socket_fd,&msg,sizeof(Msg),0 ,0,0) !=sizeof(Msg)) WRITE("recvform\n");  
-    WRITE("f %s\n",msg.name);
+   
 
     switch(msg.type){
         case(KILL_CLIENT):
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
         
        // read(socket_fd,&msg,sizeof(Msg));
         if(msg.type!=PING) WRITE("Msg received\n");
-        if(msg.type==PING) WRITE("Ping\n");
+        if(msg.type==PING &&verbose) WRITE("Ping\n");
        
         switch(msg.type){
             case MUL:

@@ -12,6 +12,7 @@
 #include <signal.h>
 #define MAX_ARRAY 50
 
+int verbose =0;
 typedef struct{
     int type;
     int arg1;

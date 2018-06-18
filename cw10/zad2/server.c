@@ -15,7 +15,6 @@ typedef struct{
     
 }Client;
 
-int verbose =1;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
 pthread_mutex_t ping_mutex = PTHREAD_MUTEX_INITIALIZER; 
 
@@ -346,7 +345,7 @@ void __init__(int argc, char *argv[]){
         eraseClient(i);
     }
 
-  //  pthread_create(&threads[0],NULL,handleTerminal,NULL);
+    pthread_create(&threads[0],NULL,handleTerminal,NULL);
     pthread_create(&threads[1],NULL,pingClients,NULL);
 }
 
