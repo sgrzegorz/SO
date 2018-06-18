@@ -88,7 +88,6 @@ int main(int argc, char *argv[]){
 
 void *pingClients(void * arg){
     
-    
     while(1){
         
         pthread_mutex_lock(&ping_mutex);
@@ -98,8 +97,12 @@ void *pingClients(void * arg){
                 client[i].ponged =0;
                 Msg msg;
                 msg.type =PING;
-                if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto36\n");
-
+                if(client[i].fd ==web_fd){
+                    if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto36\n");
+                }else{
+                    write(client[i].fd,&msg,sizeof(Msg));
+                }
+              
 
             }
         }
@@ -115,8 +118,12 @@ void *pingClients(void * arg){
                 Msg msg;
                 msg.type = KILL_CLIENT;
                 for(int i=0;i<1;i++){
-                    if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto10 %s\n",strerror(errno));
-
+                    if(client[i].fd ==web_fd){
+                        if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto10 %s\n",strerror(errno));
+                    }else{
+                        write(client[i].fd,&msg,sizeof(Msg));
+                    }
+                    
                 }
      
                 eraseClient(i);
@@ -134,8 +141,12 @@ void receiveMessage(int fd){
     struct sockaddr msg_addr;
     socklen_t addrsize = sizeof(msg_addr);//JEBANIE KURWA WAŻNA LINIJKA
 
-    
-    recvfrom(fd,&msg,sizeof(Msg),0 ,&msg_addr, &addrsize);    
+    if(fd == web_fd){
+        recvfrom(fd,&msg,sizeof(Msg),0 ,&msg_addr, &addrsize); 
+    }else{
+        read(fd,&msg,sizeof(Msg));
+    }
+       
     if(msg.type!=PONG)WRITE("Received message from client %s\n",msg.name);
     
     switch(msg.type){
@@ -153,8 +164,13 @@ void receiveMessage(int fd){
         
                     //remove socket
                     msg.type = KILL_CLIENT;
-                    if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto10 %s\n",strerror(errno));
+                    if(client[i].fd ==web_fd){
+                         if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto10 %s\n",strerror(errno));
 
+                    }else{
+                        write(fd,&msg,sizeof(Msg));
+                    }
+                
                     eraseClient(i);
                     
                     break;
@@ -173,7 +189,11 @@ void receiveMessage(int fd){
                     
                     WRITE("Client name exists, kill client\n");
                     msg.type = KILL_CLIENT;
-                    if(sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto2\n");
+                    if(fd == web_fd){
+                        if(sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto2\n");
+                    }else{
+                        write(fd,&msg,sizeof(Msg));
+                    }
                     
                     pthread_mutex_unlock(&mutex);
                     return;
@@ -196,10 +216,13 @@ void receiveMessage(int fd){
               
                     strcpy(msg.name, "registered\n");
                     msg.type =SUCCESS;
-
-                    if(sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto6 %s\n",strerror(errno));
-                    
-                     //if(sendto(fd,&msg,sizeof(Msg),0 ,&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto6 %s\n",strerror(errno));
+                    if(fd ==web_fd){
+                        if(sendto(fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&msg_addr, addrsize)!=sizeof(Msg)) FAILURE_EXIT("sendto6 %s\n",strerror(errno));
+                    }else{
+                        write(fd,&msg,sizeof(Msg));
+                    }
+                   
+                  
                     
                     break;
                 }   
@@ -277,8 +300,11 @@ void *handleTerminal(void * arg){
         for(int i=0;i<MAX_CLIENTS;i++){
             if(client[i].is_active){
                 if(k == who){
-                    
-                    if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto36\n");
+                    if(client[i].fd == web_fd){
+                        if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto36\n");
+                    }else{
+                        write(client[i].fd,&msg,sizeof(Msg));
+                    }
 
                     break;
                 }
@@ -318,7 +344,7 @@ void __init__(int argc, char *argv[]){
 
 
     //Local socket -----------------------------------------------------------------------------
-     if((local_fd = socket(AF_UNIX, SOCK_DGRAM,0)) == -1) FAILURE_EXIT("Failed to create communication endpoint local_fd\n");
+    if((local_fd = socket(AF_UNIX, SOCK_DGRAM,0)) == -1) FAILURE_EXIT("Failed to create communication endpoint local_fd\n");
     int yes1=1;
     if (setsockopt(web_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes1)) == -1) FAILURE_EXIT("setsockopt local");
     remove(unix_path);
@@ -358,7 +384,11 @@ void __del__(){
         if(client[i].is_active){
             Msg msg;
             msg.type = KILL_CLIENT;
-            if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto3\n");
+            if(client[i].fd == web_fd){
+                if(sendto(client[i].fd,&msg,sizeof(Msg),0 ,(struct sockaddr*)&client[i].msg_addr, client[i].addrsize)!=sizeof(Msg)) WRITE("sendto3\n");
+            }else{
+                write(client[i].fd,&msg,sizeof(Msg));
+            }
 
             eraseClient(i);
         }
